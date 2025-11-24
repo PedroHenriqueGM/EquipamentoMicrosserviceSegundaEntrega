@@ -1,6 +1,7 @@
 package com.example.Equipamento.Service;
 
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
+import com.example.Equipamento.Dto.RetirarTrancaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Totem;
 import com.example.Equipamento.Model.Tranca;
@@ -23,8 +24,7 @@ public class TrancaService {
     private EmailService emailService;
 
 
-
-    public TrancaService(TrancaRepository repository, BicicletaRepository bicicletaRepository,TotemRepository totemRepository, EmailService emailService) {
+    public TrancaService(TrancaRepository repository, BicicletaRepository bicicletaRepository, TotemRepository totemRepository, EmailService emailService) {
         this.repository = repository;
         this.bicicletaRepository = bicicletaRepository;
         this.totemRepository = totemRepository;
@@ -121,9 +121,9 @@ public class TrancaService {
 
     public List<Tranca> listarTrancasDoTotem(Long idTotem) {
         if (!totemRepository.existsById(idTotem)) {
-             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Totem não encontrado.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Totem não encontrado.");
         }
-        
+
         return repository.findByTotemId(idTotem);
     }
 
@@ -204,6 +204,81 @@ public class TrancaService {
             );
         }
     }
+    @Transactional
+    public void retirarTranca(RetirarTrancaDTO dto) {
+
+        // 1. Buscar tranca
+        Tranca tranca = repository.findById(Math.toIntExact(dto.getIdTranca()))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Número da tranca inválido."
+                ));
+
+        // 2. Validar status “reparo solicitado”
+        if (!"reparo_solicitado".equalsIgnoreCase(tranca.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A tranca deve estar com status 'reparo_solicitado' para retirada."
+            );
+        }
+
+        // 3. Validar motivo
+        String motivo = dto.getMotivo().toLowerCase();
+        if (!motivo.equals("reparo") && !motivo.equals("aposentadoria")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Motivo deve ser 'reparo' ou 'aposentadoria'."
+            );
+        }
+
+        // 4. Libertar tranca do totem
+        tranca = repository.findById(Math.toIntExact(dto.getIdTranca()))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Número da tranca inválido."
+                ));
+
+        tranca.setTotem(null);  // só ISSO já tira do totem
+
+
+        // 5. Alterar status final
+        if (motivo.equals("reparo")) {
+            tranca.setStatus("em_reparo");
+        } else {
+            tranca.setStatus("aposentada");
+        }
+
+        // 6. Registrar retirada (R1)
+        LocalDateTime agora = LocalDateTime.now();
+        System.out.printf(
+                "[RETIRADA TRANCA] dataHora=%s, idReparador=%d, idTranca=%d, motivo=%s%n",
+                agora, dto.getIdReparador(), dto.getIdTranca(), motivo
+        );
+
+        // 7. Persistir
+        repository.saveAndFlush(tranca);
+
+        // 8. Enviar email (R2)
+        try {
+            emailService.enviarEmail(
+                    "reparador@example.com",
+                    "Retirada de Tranca",
+                    String.format(
+                            "A tranca %d foi retirada pelo reparador %d às %s. Motivo: %s.",
+                            dto.getIdTranca(),
+                            dto.getIdReparador(),
+                            agora.toString(),
+                            motivo
+                    )
+            );
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "E2 – Não foi possível enviar o email."
+            );
+        }
+    }
+
+
 
 
 }

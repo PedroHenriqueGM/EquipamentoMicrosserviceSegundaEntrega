@@ -2,6 +2,7 @@ package com.example.Equipamento.Controller;
 
 
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
+import com.example.Equipamento.Dto.RetirarTrancaDTO;
 import com.example.Equipamento.Model.Tranca;
 import com.example.Equipamento.Repository.TrancaRepository;
 import com.example.Equipamento.Service.TrancaService;
@@ -69,6 +70,13 @@ public class TrancaController {
         trancaService.incluirTrancaNaRede(dto);
         return ResponseEntity.ok("Tranca integrada com sucesso na rede de totens.");
     }
+
+    @PostMapping("/retirarDaRede")
+    public ResponseEntity<String> retirarTranca(@RequestBody RetirarTrancaDTO dto) {
+        trancaService.retirarTranca(dto);
+        return ResponseEntity.ok("Tranca retirada com sucesso.");
+    }
+
 
 
 
