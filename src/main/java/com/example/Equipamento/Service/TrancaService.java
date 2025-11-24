@@ -60,7 +60,13 @@ public class TrancaService {
                     "R3: o número da tranca não pode ser alterado.");
         }
 
-        if (req.getStatus() != null) entity.setStatus(req.getStatus());
+        // R1: status inicial é 'nova' e NÃO pode ser editado via PUT
+        if (req.getStatus() != null && !req.getStatus().equalsIgnoreCase(entity.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "R1: o status não pode ser editado."
+            );
+        }
         if (req.getModelo() != null) entity.setModelo(req.getModelo());
         if (req.getAno() != null) entity.setAno(req.getAno());
         if (req.getLocalizacao() != null) entity.setLocalizacao(req.getLocalizacao());

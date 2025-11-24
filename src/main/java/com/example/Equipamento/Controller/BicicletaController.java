@@ -1,11 +1,13 @@
 package com.example.Equipamento.Controller;
 
+import com.example.Equipamento.Dto.IncluirBicicletaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Repository.BicicletaRepository;
 import com.example.Equipamento.Service.BicicletaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +53,14 @@ public class BicicletaController {
             @RequestBody Bicicleta bicicleta) {
         bicicletaService.atualizarBicicletaPorId(id, bicicleta);
         return ok().build();
+    }
+
+    @PostMapping("/integrarNaRede")
+    public ResponseEntity<Void> incluirNaRede(@RequestBody IncluirBicicletaDTO dto) {
+
+        bicicletaService.incluirBicicletaNaRede(dto);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }
