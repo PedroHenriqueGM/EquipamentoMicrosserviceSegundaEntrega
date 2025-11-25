@@ -326,9 +326,58 @@ public class BicicletaService {
                     "E2 – Não foi possível enviar o email."
             );
         }
-
-        // 9. Caso de uso concluído com sucesso
     }
+
+    public Bicicleta alterarStatus(Integer idBicicleta, String acao) {
+        Bicicleta bicicleta = repository.findById(idBicicleta)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        MSG_BICICLETA_NAO_ENCONTRADA
+                ));
+
+        if (acao == null || acao.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Ação não informada."
+            );
+        }
+
+        String acaoUpper = acao.toUpperCase();
+
+        // Mapeia a ação (enum do path) para o status interno da bicicleta
+        String novoStatus;
+        switch (acaoUpper) {
+            case "DISPONIVEL":
+                novoStatus = "disponivel";
+                break;
+            case "EM_USO":
+                novoStatus = "em_uso";
+                break;
+            case "NOVA":
+                novoStatus = "nova";
+                break;
+            case "APOSENTADA":
+                novoStatus = "aposentada";
+                break;
+            case "REPARO_SOLICITADO":
+                novoStatus = "reparo_solicitado";
+                break;
+            case "EM_REPARO":
+                novoStatus = "em_reparo";
+                break;
+            default:
+                throw new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Ação inválida. Use: DISPONIVEL, EM_USO, NOVA, APOSENTADA, REPARO_SOLICITADO ou EM_REPARO."
+                );
+        }
+
+        bicicleta.setStatus(novoStatus);
+        repository.saveAndFlush(bicicleta);
+
+        return bicicleta;
+    }
+
 
 }
 

@@ -70,5 +70,15 @@ public class BicicletaController {
         return ResponseEntity.ok("Bicicleta retirada com sucesso.");
     }
 
+    @PostMapping("/{idBicicleta}/status/{acao}")
+    public ResponseEntity<Bicicleta> alterarStatusBicicleta(
+            @PathVariable Integer idBicicleta,
+            @PathVariable String acao) {
+
+        Bicicleta atualizada = bicicletaService.alterarStatus(idBicicleta, acao);
+        return ResponseEntity.ok(atualizada);
+    }
+
+
 
 }

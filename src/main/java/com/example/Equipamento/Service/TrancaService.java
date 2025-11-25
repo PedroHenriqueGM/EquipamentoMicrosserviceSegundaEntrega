@@ -323,7 +323,54 @@ public class TrancaService {
         }
     }
 
+    public Tranca alterarStatus(Integer idTranca, String acao) {
+        Tranca tranca = repository.findById(idTranca)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        MSG_TRANCA_NAO_ENCONTRADA
+                ));
 
+        if (acao == null || acao.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Ação não informada."
+            );
+        }
+
+        String acaoUpper = acao.toUpperCase();
+
+        switch (acaoUpper) {
+            case "TRANCAR":
+                // Exemplo simples: se já estiver "trancada", retorna erro 422
+                if (!"livre".equalsIgnoreCase(tranca.getStatus())) {
+                    throw new ResponseStatusException(
+                            HttpStatus.UNPROCESSABLE_ENTITY,
+                            "Tranca já está trancada ou em uso."
+                    );
+                }
+                tranca.setStatus("trancada"); // ou "ocupada", se for o termo que você usa
+                break;
+
+            case "DESTRANCAR":
+                if ("livre".equalsIgnoreCase(tranca.getStatus())) {
+                    throw new ResponseStatusException(
+                            HttpStatus.UNPROCESSABLE_ENTITY,
+                            "Tranca já está destrancada."
+                    );
+                }
+                tranca.setStatus("livre");
+                break;
+
+            default:
+                throw new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Ação inválida. Use: TRANCAR ou DESTRANCAR."
+                );
+        }
+
+        repository.saveAndFlush(tranca);
+        return tranca;
+    }
 
 
 }

@@ -77,6 +77,15 @@ public class TrancaController {
         return ResponseEntity.ok("Tranca retirada com sucesso.");
     }
 
+    @PostMapping("/{idTranca}/status/{acao}")
+    public ResponseEntity<Tranca> alterarStatusTranca(
+            @PathVariable Integer idTranca,
+            @PathVariable String acao) {
+
+        Tranca atualizada = trancaService.alterarStatus(idTranca, acao);
+        return ResponseEntity.ok(atualizada);
+    }
+
 
 
 
