@@ -35,6 +35,17 @@ public class BicicletaService {
     private static final String MSG_BICICLETA_NAO_ENCONTRADA = "Bicicleta não encontrada";
 
     public void incluirBicicleta(Bicicleta bicicleta) {
+
+        // R2 – Campos obrigatórios para cadastrar bicicleta
+        if (bicicleta.getMarca() == null || bicicleta.getMarca().isBlank() ||
+                bicicleta.getModelo() == null || bicicleta.getModelo().isBlank() ||
+                bicicleta.getAno() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "R2: Marca, modelo e ano são obrigatórios para cadastrar uma bicicleta."
+            );
+        }
+
         // R1: status inicial "nova"
         bicicleta.setStatus("nova");
 
@@ -86,8 +97,7 @@ public class BicicletaService {
         // R2 – Todos os campos obrigatórios devem estar preenchidos
         if (req.getMarca() == null || req.getMarca().isBlank() ||
                 req.getModelo() == null || req.getModelo().isBlank() ||
-                req.getAno() == null ||
-                req.getLocalizacao() == null || req.getLocalizacao().isBlank()) {
+                req.getAno() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "R2: Todos os dados obrigatórios devem ser preenchidos para atualizar uma bicicleta."

@@ -34,6 +34,15 @@ public class TrancaService {
     private static final String MSG_TRANCA_NAO_ENCONTRADA = "Tranca não encontrada";
 
     public void salvarTranca(Tranca tranca) {
+
+        // R2 – Campos obrigatórios para cadastrar tranca
+        if (tranca.getModelo() == null || tranca.getModelo().isBlank() ||
+                tranca.getAno() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "R2: Modelo e ano são obrigatórios para cadastrar uma tranca."
+            );
+        }
         // R1: status inicial "nova"
         tranca.setStatus("nova");
 
@@ -75,11 +84,10 @@ public class TrancaService {
 
         // R2 – Todos os campos obrigatórios devem estar preenchidos
         if (req.getModelo() == null || req.getModelo().isBlank() ||
-                req.getAno() == null ||
-                req.getLocalizacao() == null || req.getLocalizacao().isBlank()) {
+                req.getAno() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "R2: Todos os dados obrigatórios devem ser preenchidos para atualizar uma tranca."
+                    "R2: Modelo e ano são obrigatórios para atualizar uma tranca."
             );
         }
 
