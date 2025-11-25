@@ -48,7 +48,23 @@ public class TrancaService {
     }
 
     public void deletarTranca(Integer id) {
-        repository.deleteById(id);
+        Tranca tranca = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        MSG_TRANCA_NAO_ENCONTRADA
+                ));
+
+        // R4 – Apenas trancas sem bicicleta podem ser excluídas
+        if (tranca.getBicicleta() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "R4: tranca com bicicleta associada não pode ser excluída."
+            );
+        }
+
+        // Soft delete — altera apenas o status
+        tranca.setStatus("excluida");
+        repository.saveAndFlush(tranca);
     }
 
     public void atualizarTrancaPorId(Integer id, Tranca req) {
