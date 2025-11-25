@@ -5,6 +5,8 @@ import com.example.Equipamento.Dto.RetirarBicicletaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Totem;
 import com.example.Equipamento.Model.Tranca;
+import com.example.Equipamento.Model.enums.StatusBicicleta;
+import com.example.Equipamento.Model.enums.StatusTranca;
 import com.example.Equipamento.Repository.BicicletaRepository;
 import com.example.Equipamento.Repository.TrancaRepository;
 import com.example.Equipamento.Repository.TotemRepository;
@@ -47,7 +49,7 @@ public class BicicletaService {
         }
 
         // R1: status inicial "nova"
-        bicicleta.setStatus("nova");
+        bicicleta.setStatus(StatusBicicleta.NOVA);
 
         // Primeiro salva para gerar o ID
         Bicicleta salva = repository.saveAndFlush(bicicleta);
@@ -65,22 +67,20 @@ public class BicicletaService {
         Bicicleta b = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_BICICLETA_NAO_ENCONTRADA));
 
-        // R4: apenas 'aposentada'
-        if (b.getStatus() == null || !b.getStatus().equalsIgnoreCase("aposentada")) {
+        if (b.getStatus() != StatusBicicleta.APOSENTADA) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "R4: apenas bicicletas com status 'aposentada' podem ser excluídas");
+                    "R4: apenas bicicletas 'APOSENTADA' podem ser excluídas");
         }
 
-        // R4: e NÃO pode estar em nenhuma tranca
         if (trancaRepository.existsByBicicletaId(b.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "R4: bicicleta vinculada a uma tranca não pode ser excluída");
         }
 
-        // Soft delete: marca como 'excluida'
-        b.setStatus("excluida");
+        b.setStatus(StatusBicicleta.EXCLUIDA);
         repository.saveAndFlush(b);
     }
+
 
     public Bicicleta buscarPorId(Integer id) {
         return repository.findById(id).orElseThrow(
@@ -90,33 +90,24 @@ public class BicicletaService {
 
     public void atualizarBicicletaPorId(Integer id, Bicicleta req) {
         Bicicleta entity = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, MSG_BICICLETA_NAO_ENCONTRADA
-                ));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_BICICLETA_NAO_ENCONTRADA));
 
-        // R2 – Todos os campos obrigatórios devem estar preenchidos
-        if (req.getMarca() == null || req.getMarca().isBlank() ||
-                req.getModelo() == null || req.getModelo().isBlank() ||
-                req.getAno() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "R2: Todos os dados obrigatórios devem ser preenchidos para atualizar uma bicicleta."
-            );
+        if (req.getMarca() == null || req.getMarca().isBlank()
+                || req.getModelo() == null || req.getModelo().isBlank()
+                || req.getAno() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "R2: Marca, modelo e ano são obrigatórios.");
         }
 
-        // R3 – Número não pode ser alterado
         if (req.getNumero() != null && !req.getNumero().equals(entity.getNumero())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "R3: o número da bicicleta não pode ser alterado.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "R3: o número não pode ser alterado.");
         }
 
-        // R1 – Status não pode ser alterado via PUT
-        if (req.getStatus() != null && !req.getStatus().equalsIgnoreCase(entity.getStatus())) {
+        if (req.getStatus() != null && req.getStatus() != entity.getStatus()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "R1: o status da bicicleta não pode ser alterado diretamente.");
+                    "R1: o status da bicicleta não pode ser alterado via PUT.");
         }
 
-        // Atualização
         entity.setMarca(req.getMarca());
         entity.setModelo(req.getModelo());
         entity.setAno(req.getAno());
@@ -151,16 +142,14 @@ public class BicicletaService {
                 ));
 
         // 2. Validar status — deve ser nova ou em_reparo
-        String status = bicicleta.getStatus() != null ? bicicleta.getStatus().toLowerCase() : "";
-
-        if (!status.equals("nova") && !status.equals("em_reparo")) {
+        StatusBicicleta status = bicicleta.getStatus();
+        if (status != StatusBicicleta.NOVA && status != StatusBicicleta.EM_REPARO) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Bicicleta deve estar com status 'nova' ou 'em_reparo'.");
+                    "Bicicleta deve estar com status NOVA ou EM_REPARO.");
         }
 
-        // 3. Em reparo → verificar se é o mesmo reparador (R3)
-        // Opcional pois sua classe Bicicleta NÃO TEM esse campo
-        if (status.equals("em_reparo")) {
+        // 3. TODO: validar reparador no caso EM_REPARO
+        if (status == StatusBicicleta.EM_REPARO) {
             System.out.println("[AVISO] TODO: validar reparador responsável (R3).");
         }
 
@@ -171,12 +160,10 @@ public class BicicletaService {
                         "Tranca não encontrada."
                 ));
 
-        // 5. Tranca deve estar disponível
-        String statusTranca = tranca.getStatus() != null ? tranca.getStatus().toLowerCase() : "";
-
-        if (!statusTranca.equals("livre") && !statusTranca.equals("disponível")) {
+        /// 5. Tranca deve estar LIVRE
+        if (tranca.getStatus() != StatusTranca.LIVRE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "A tranca deve estar com status 'disponível' para receber bicicleta.");
+                    "A tranca deve estar LIVRE para receber bicicleta.");
         }
 
         // 6. Registrar log
@@ -187,7 +174,7 @@ public class BicicletaService {
         );
 
         // 7. Atualizar associações
-        bicicleta.setStatus("disponível");
+        bicicleta.setStatus(StatusBicicleta.DISPONIVEL);
         tranca.setBicicleta(bicicleta);
 
         repository.saveAndFlush(bicicleta);
@@ -226,7 +213,6 @@ public class BicicletaService {
                         HttpStatus.BAD_REQUEST,
                         "Número da tranca inválido."
                 ));
-
         // 2. Garantir que há bicicleta presa na tranca (pré-condição)
         Bicicleta bicicleta = tranca.getBicicleta();
         if (bicicleta == null) {
@@ -235,28 +221,21 @@ public class BicicletaService {
                     "Não há bicicleta presa nesta tranca."
             );
         }
-
-        // 3. Validar status da bicicleta e da tranca (A2)
-        String statusBike = bicicleta.getStatus() != null ? bicicleta.getStatus().toLowerCase() : "";
-        String statusTranca = tranca.getStatus() != null ? tranca.getStatus().toLowerCase() : "";
-
-        // A2 – bicicleta "disponível" OU tranca "livre" → erro
-        if (statusBike.equals("disponível") || statusBike.equals("disponivel")
-                || statusTranca.equals("livre")) {
+        StatusBicicleta statusBike = bicicleta.getStatus();
+        // 3. Bicicleta precisa estar REPARO_SOLICITADO
+        if (statusBike != StatusBicicleta.REPARO_SOLICITADO) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Bicicleta deve estar com status 'reparo_solicitado' e a tranca não pode estar livre."
+                    "A bicicleta deve estar com status REPARO_SOLICITADO para retirada."
             );
         }
-
-        // Bicicleta precisa estar com status "reparo_solicitado"
-        if (!"reparo_solicitado".equalsIgnoreCase(statusBike)) {
+        // E a tranca não pode estar LIVRE
+        if (tranca.getStatus() == StatusTranca.LIVRE) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A bicicleta deve estar com status 'reparo_solicitado' para retirada."
+                    "A tranca não pode estar LIVRE."
             );
         }
-
         // 4. Validar motivo (fluxo principal x alternativo A1)
         String motivo = dto.getMotivo() != null ? dto.getMotivo().toLowerCase() : "";
         if (!motivo.equals("reparo") && !motivo.equals("aposentadoria")) {
@@ -266,17 +245,16 @@ public class BicicletaService {
             );
         }
 
-        // 5. Abrir tranca e retirar bicicleta (parte física é externa)
-        // 5.1 Atualizar status final da bicicleta (passos 8 / A2.6)
+        // 5. Definir status final
         if (motivo.equals("reparo")) {
-            bicicleta.setStatus("em_reparo");
+            bicicleta.setStatus(StatusBicicleta.EM_REPARO);
         } else {
-            bicicleta.setStatus("aposentada");
+            bicicleta.setStatus(StatusBicicleta.APOSENTADA);
         }
 
-        // 5.2 Remover vínculo bicicleta ←→ tranca e deixar tranca livre
+        // Remover vínculo
         tranca.setBicicleta(null);
-        tranca.setStatus("livre");
+        tranca.setStatus(StatusTranca.LIVRE);
 
         // 6. Registrar retirada (R1)
         LocalDateTime agora = LocalDateTime.now();
@@ -306,20 +284,17 @@ public class BicicletaService {
                     agora.toString(),
                     motivo
             );
-
             String resultado = emailService.enviarEmail(
                     "reparador@example.com",
                     assunto,
                     corpo
             );
-
             if (!"sucesso".equalsIgnoreCase(resultado)) {
                 throw new ResponseStatusException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "E2 – Não foi possível enviar o email."
                 );
             }
-
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -328,55 +303,31 @@ public class BicicletaService {
         }
     }
 
-    public Bicicleta alterarStatus(Integer idBicicleta, String acao) {
+    public Bicicleta alterarStatus(Integer idBicicleta, String acaoRaw) {
         Bicicleta bicicleta = repository.findById(idBicicleta)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         MSG_BICICLETA_NAO_ENCONTRADA
                 ));
-
-        if (acao == null || acao.isBlank()) {
+        if (acaoRaw == null || acaoRaw.isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
                     "Ação não informada."
             );
         }
-
-        String acaoUpper = acao.toUpperCase();
-
-        // Mapeia a ação (enum do path) para o status interno da bicicleta
-        String novoStatus;
-        switch (acaoUpper) {
-            case "DISPONIVEL":
-                novoStatus = "disponivel";
-                break;
-            case "EM_USO":
-                novoStatus = "em_uso";
-                break;
-            case "NOVA":
-                novoStatus = "nova";
-                break;
-            case "APOSENTADA":
-                novoStatus = "aposentada";
-                break;
-            case "REPARO_SOLICITADO":
-                novoStatus = "reparo_solicitado";
-                break;
-            case "EM_REPARO":
-                novoStatus = "em_reparo";
-                break;
-            default:
-                throw new ResponseStatusException(
-                        HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Ação inválida. Use: DISPONIVEL, EM_USO, NOVA, APOSENTADA, REPARO_SOLICITADO ou EM_REPARO."
-                );
+        StatusBicicleta novoStatus;
+        try {
+            novoStatus = StatusBicicleta.valueOf(acaoRaw.toUpperCase());
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Status inválido. Use DISPONIVEL, EM_USO, NOVA, APOSENTADA, REPARO_SOLICITADO, EM_REPARO."
+            );
         }
-
         bicicleta.setStatus(novoStatus);
-        repository.saveAndFlush(bicicleta);
-
-        return bicicleta;
+        return repository.saveAndFlush(bicicleta);
     }
+
 
 
 }

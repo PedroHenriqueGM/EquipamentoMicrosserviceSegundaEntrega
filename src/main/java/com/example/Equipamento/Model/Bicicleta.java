@@ -1,5 +1,6 @@
 package com.example.Equipamento.Model;
 
+import com.example.Equipamento.Model.enums.StatusBicicleta;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,8 +20,8 @@ public class Bicicleta {
     @Column(name = "numero", unique = true)
     private String numero;
 
-    @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private StatusBicicleta status;
 
     @Column(name = "marca")
     private String marca;

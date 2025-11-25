@@ -1,5 +1,6 @@
 package com.example.Equipamento.Model;
 
+import com.example.Equipamento.Model.enums.StatusTranca;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -22,8 +23,8 @@ public class Tranca {
     @NotBlank(message = "O número da tranca é obrigatório.")
     private String numero;
 
-    @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private StatusTranca status;
 
     @Column(name = "modelo")
     private String modelo;

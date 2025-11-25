@@ -5,6 +5,8 @@ import com.example.Equipamento.Dto.RetirarTrancaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Totem;
 import com.example.Equipamento.Model.Tranca;
+import com.example.Equipamento.Model.enums.StatusBicicleta;
+import com.example.Equipamento.Model.enums.StatusTranca;
 import com.example.Equipamento.Repository.BicicletaRepository;
 import com.example.Equipamento.Repository.TrancaRepository;
 import com.example.Equipamento.Repository.TotemRepository;
@@ -44,7 +46,7 @@ public class TrancaService {
             );
         }
         // R1: status inicial "nova"
-        tranca.setStatus("nova");
+        tranca.setStatus(StatusTranca.NOVA);
 
         // Primeiro salva para gerar o ID
         Tranca salva = repository.saveAndFlush(tranca);
@@ -72,7 +74,7 @@ public class TrancaService {
         }
 
         // Soft delete — altera apenas o status
-        tranca.setStatus("excluida");
+        tranca.setStatus(StatusTranca.EXCLUIDA);
         repository.saveAndFlush(tranca);
     }
 
@@ -98,11 +100,10 @@ public class TrancaService {
         }
 
         // R1 – status inicial 'nova' não é editável
-        if (req.getStatus() != null && !req.getStatus().equalsIgnoreCase(entity.getStatus())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "R1: o status da tranca não pode ser alterado via atualização."
-            );
+        if (req.getStatus() != null &&
+                req.getStatus() != entity.getStatus()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "R1: o status da tranca não pode ser alterado via atualização.");
         }
 
         // Atualização completa
@@ -115,54 +116,60 @@ public class TrancaService {
 
     public void trancar(Integer idTranca, String idBicicleta) {
         Tranca tranca = repository.findById(idTranca)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA));
-
-        if ("ocupada".equalsIgnoreCase(tranca.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tranca já está ocupada");
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA
+                ));
+        // 🔒 Só pode trancar se estiver LIVRE
+        if (tranca.getStatus() != StatusTranca.LIVRE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A tranca só pode ser TRANCADA quando está LIVRE."
+            );
         }
-
         Bicicleta bike = null;
         if (idBicicleta != null) {
             bike = bicicletaRepository.findByNumero(idBicicleta)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bicicleta não encontrada"));
-
-            // opcional: se já estiver em outra tranca, barre
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Bicicleta não encontrada"
+                    ));
+            // 🚨 Se já estiver presa em outra tranca → erro
             if (repository.existsByBicicletaId(bike.getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esta bicicleta já está presa em outra tranca");
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Esta bicicleta já está presa em outra tranca."
+                );
             }
-
-            // status da bicicleta ao trancar
-            bike.setStatus("travada");
-            bicicletaRepository.saveAndFlush(bike);
-
-            // faz o vínculo
+            // Apenas faz o vínculo
             tranca.setBicicleta(bike);
         }
-
-        // status da tranca ao trancar
-        tranca.setStatus("ocupada");
+        // Atualiza status da tranca
+        tranca.setStatus(StatusTranca.OCUPADA);
         repository.saveAndFlush(tranca);
     }
+
 
     public void destrancar(Integer idTranca) {
         Tranca tranca = repository.findById(idTranca)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA));
-
-        if ("livre".equalsIgnoreCase(tranca.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tranca já está livre");
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA
+                ));
+        // 🔓 Só pode destrancar se estiver OCUPADA
+        if (tranca.getStatus() != StatusTranca.OCUPADA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A tranca só pode ser DESTRANCADA quando está OCUPADA."
+            );
         }
-
-        // se houver bicicleta, atualiza status e remove vínculo
         Bicicleta bike = tranca.getBicicleta();
+        // Se houver bicicleta presa, desassocia
         if (bike != null) {
-            bike.setStatus("disponivel"); // ou “nova”/“em_uso” conforme seu fluxo
-            bicicletaRepository.saveAndFlush(bike);
+            // ❗ Swagger não manda alterar status da bike
             tranca.setBicicleta(null);
         }
-
-        tranca.setStatus("livre");
+        tranca.setStatus(StatusTranca.LIVRE);
         repository.saveAndFlush(tranca);
     }
+
 
     public List<Tranca> listarTrancasDoTotem(Long idTotem) {
         if (!totemRepository.existsById(idTotem)) {
@@ -189,18 +196,17 @@ public class TrancaService {
                 ));
 
         // 3. Validar status: deve ser "nova" ou "em_reparo"
-        String status = tranca.getStatus() != null ? tranca.getStatus().toLowerCase() : "";
-
-        if (!status.equals("nova") && !status.equals("em_reparo")) {
+        if (tranca.getStatus() != StatusTranca.NOVA &&
+                tranca.getStatus() != StatusTranca.EM_REPARO) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A tranca deve estar com status 'nova' ou 'em_reparo' para ser integrada na rede."
+                    "A tranca deve estar com status NOVA ou EM_REPARO."
             );
         }
 
         // 4. R3 – Em reparo, verificar se funcionario é o mesmo
         // (Seu modelo ainda não contém esse campo — deixo como TODO)
-        if (status.equals("em_reparo")) {
+        if (tranca.getStatus() == StatusTranca.EM_REPARO) {
             System.out.println("[AVISO] TODO: validar funcionario responsável (R3).");
         }
 
@@ -219,7 +225,7 @@ public class TrancaService {
         }
 
         // 7. Alterar status para "disponível" → "livre"
-        tranca.setStatus("livre");
+        tranca.setStatus(StatusTranca.LIVRE);
 
         // 8. Persistir
         repository.saveAndFlush(tranca);
@@ -260,10 +266,10 @@ public class TrancaService {
                 ));
 
         // 2. Validar status “reparo solicitado”
-        if (!"reparo_solicitado".equalsIgnoreCase(tranca.getStatus())) {
+        if (tranca.getStatus() != StatusTranca.REPARO_SOLICITADO) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A tranca deve estar com status 'reparo_solicitado' para retirada."
+                    "A tranca deve estar com status REPARO_SOLICITADO para retirada."
             );
         }
 
@@ -287,9 +293,9 @@ public class TrancaService {
 
         // 5. Alterar status final
         if (motivo.equals("reparo")) {
-            tranca.setStatus("em_reparo");
+            tranca.setStatus(StatusTranca.EM_REPARO);
         } else {
-            tranca.setStatus("aposentada");
+            tranca.setStatus(StatusTranca.APOSENTADA);
         }
 
         // 6. Registrar retirada (R1)
@@ -323,53 +329,48 @@ public class TrancaService {
         }
     }
 
-    public Tranca alterarStatus(Integer idTranca, String acao) {
+    public Tranca alterarStatus(Integer idTranca, String acaoRaw) {
+
         Tranca tranca = repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        MSG_TRANCA_NAO_ENCONTRADA
-                ));
+                        HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA));
 
-        if (acao == null || acao.isBlank()) {
+        if (acaoRaw == null || acaoRaw.isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.UNPROCESSABLE_ENTITY,
-                    "Ação não informada."
-            );
+                    "Ação não informada.");
         }
 
-        String acaoUpper = acao.toUpperCase();
+        String acao = acaoRaw.toUpperCase();
 
-        switch (acaoUpper) {
+        switch (acao) {
+
             case "TRANCAR":
-                // Exemplo simples: se já estiver "trancada", retorna erro 422
-                if (!"livre".equalsIgnoreCase(tranca.getStatus())) {
+                if (tranca.getStatus() != StatusTranca.LIVRE) {
                     throw new ResponseStatusException(
                             HttpStatus.UNPROCESSABLE_ENTITY,
-                            "Tranca já está trancada ou em uso."
-                    );
+                            "Só é possível TRANCAR quando a tranca está LIVRE.");
                 }
-                tranca.setStatus("trancada"); // ou "ocupada", se for o termo que você usa
+                tranca.setStatus(StatusTranca.OCUPADA);
                 break;
 
             case "DESTRANCAR":
-                if ("livre".equalsIgnoreCase(tranca.getStatus())) {
+                if (tranca.getStatus() != StatusTranca.OCUPADA) {
                     throw new ResponseStatusException(
                             HttpStatus.UNPROCESSABLE_ENTITY,
-                            "Tranca já está destrancada."
-                    );
+                            "Só é possível DESTRANCAR quando a tranca está OCUPADA.");
                 }
-                tranca.setStatus("livre");
+                tranca.setStatus(StatusTranca.LIVRE);
                 break;
 
             default:
                 throw new ResponseStatusException(
                         HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Ação inválida. Use: TRANCAR ou DESTRANCAR."
+                        "Ação inválida. Use TRANCAR ou DESTRANCAR."
                 );
         }
 
-        repository.saveAndFlush(tranca);
-        return tranca;
+        return repository.saveAndFlush(tranca);
     }
 
 
