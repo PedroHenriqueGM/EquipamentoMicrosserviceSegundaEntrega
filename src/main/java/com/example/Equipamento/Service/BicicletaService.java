@@ -1,6 +1,7 @@
 package com.example.Equipamento.Service;
 
 import com.example.Equipamento.Dto.IncluirBicicletaDTO;
+import com.example.Equipamento.Dto.RetirarBicicletaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Totem;
 import com.example.Equipamento.Model.Tranca;
@@ -197,8 +198,120 @@ public class BicicletaService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Erro ao enviar o email.");
         }
-
-        // 9. pronto — função é void
     }
+
+    @Transactional
+    public void retirarBicicleta(RetirarBicicletaDTO dto) {
+
+        // 1. Buscar tranca (E1 – número inválido)
+        Tranca tranca = trancaRepository.findById(Math.toIntExact(dto.getIdTranca()))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Número da tranca inválido."
+                ));
+
+        // 2. Garantir que há bicicleta presa na tranca (pré-condição)
+        Bicicleta bicicleta = tranca.getBicicleta();
+        if (bicicleta == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Não há bicicleta presa nesta tranca."
+            );
+        }
+
+        // 3. Validar status da bicicleta e da tranca (A2)
+        String statusBike = bicicleta.getStatus() != null ? bicicleta.getStatus().toLowerCase() : "";
+        String statusTranca = tranca.getStatus() != null ? tranca.getStatus().toLowerCase() : "";
+
+        // A2 – bicicleta "disponível" OU tranca "livre" → erro
+        if (statusBike.equals("disponível") || statusBike.equals("disponivel")
+                || statusTranca.equals("livre")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Bicicleta deve estar com status 'reparo_solicitado' e a tranca não pode estar livre."
+            );
+        }
+
+        // Bicicleta precisa estar com status "reparo_solicitado"
+        if (!"reparo_solicitado".equalsIgnoreCase(statusBike)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A bicicleta deve estar com status 'reparo_solicitado' para retirada."
+            );
+        }
+
+        // 4. Validar motivo (fluxo principal x alternativo A1)
+        String motivo = dto.getMotivo() != null ? dto.getMotivo().toLowerCase() : "";
+        if (!motivo.equals("reparo") && !motivo.equals("aposentadoria")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Motivo deve ser 'reparo' ou 'aposentadoria'."
+            );
+        }
+
+        // 5. Abrir tranca e retirar bicicleta (parte física é externa)
+        // 5.1 Atualizar status final da bicicleta (passos 8 / A2.6)
+        if (motivo.equals("reparo")) {
+            bicicleta.setStatus("em_reparo");
+        } else {
+            bicicleta.setStatus("aposentada");
+        }
+
+        // 5.2 Remover vínculo bicicleta ←→ tranca e deixar tranca livre
+        tranca.setBicicleta(null);
+        tranca.setStatus("livre");
+
+        // 6. Registrar retirada (R1)
+        LocalDateTime agora = LocalDateTime.now();
+        System.out.printf(
+                "[RETIRADA BICICLETA] dataHora=%s, idReparador=%d, idBicicleta=%d, idTranca=%d, motivo=%s%n",
+                agora,
+                dto.getIdReparador(),
+                bicicleta.getId(),
+                tranca.getId(),
+                motivo
+        );
+
+        // 7. Persistir alterações
+        repository.saveAndFlush(bicicleta);
+        trancaRepository.saveAndFlush(tranca);
+
+        // 8. Enviar email (R2) – com tratamento de erro [E2]
+        try {
+            String assunto = "Retirada de Bicicleta da Rede";
+            String corpo = String.format(
+                    "A bicicleta %s (ID=%d) foi retirada da tranca %s (ID=%d) pelo reparador %d às %s. Motivo: %s.",
+                    bicicleta.getNumero(),
+                    bicicleta.getId(),
+                    tranca.getNumero(),
+                    tranca.getId(),
+                    dto.getIdReparador(),
+                    agora.toString(),
+                    motivo
+            );
+
+            String resultado = emailService.enviarEmail(
+                    "reparador@example.com",
+                    assunto,
+                    corpo
+            );
+
+            if (!"sucesso".equalsIgnoreCase(resultado)) {
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "E2 – Não foi possível enviar o email."
+                );
+            }
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "E2 – Não foi possível enviar o email."
+            );
+        }
+
+        // 9. Caso de uso concluído com sucesso
+    }
+
 }
 

@@ -1,6 +1,7 @@
 package com.example.Equipamento.Controller;
 
 import com.example.Equipamento.Dto.IncluirBicicletaDTO;
+import com.example.Equipamento.Dto.RetirarBicicletaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Repository.BicicletaRepository;
 import com.example.Equipamento.Service.BicicletaService;
@@ -62,5 +63,12 @@ public class BicicletaController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @PostMapping("/retirarDaRede")
+    public ResponseEntity<String> retirarDaRede(@RequestBody RetirarBicicletaDTO dto) {
+        bicicletaService.retirarBicicleta(dto);
+        return ResponseEntity.ok("Bicicleta retirada com sucesso.");
+    }
+
 
 }
