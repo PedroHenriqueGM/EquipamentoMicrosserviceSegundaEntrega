@@ -213,6 +213,7 @@ public class BicicletaService {
                         HttpStatus.BAD_REQUEST,
                         "Número da tranca inválido."
                 ));
+
         // 2. Garantir que há bicicleta presa na tranca (pré-condição)
         Bicicleta bicicleta = tranca.getBicicleta();
         if (bicicleta == null) {
@@ -221,34 +222,40 @@ public class BicicletaService {
                     "Não há bicicleta presa nesta tranca."
             );
         }
-        StatusBicicleta statusBike = bicicleta.getStatus();
-        // 3. Bicicleta precisa estar REPARO_SOLICITADO
-        if (statusBike != StatusBicicleta.REPARO_SOLICITADO) {
+
+        // 3. (Opcional) Validar se o idBicicleta do corpo bate com a bicicleta presa
+        if (dto.getIdBicicleta() != null &&
+                !dto.getIdBicicleta().equals((long) bicicleta.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A bicicleta informada não corresponde à bicicleta presa na tranca."
+            );
+        }
+
+        // 4. Validar status atual da bicicleta
+        if (bicicleta.getStatus() != StatusBicicleta.REPARO_SOLICITADO) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A bicicleta deve estar com status REPARO_SOLICITADO para retirada."
             );
         }
-        // E a tranca não pode estar LIVRE
-        if (tranca.getStatus() == StatusTranca.LIVRE) {
+
+        // 5. Validar destino (statusAcaoReparador do Swagger)
+        String statusDestino = dto.getStatusAcaoReparador() != null
+                ? dto.getStatusAcaoReparador().toUpperCase()
+                : "";
+
+        if (!statusDestino.equals("EM_REPARO") && !statusDestino.equals("APOSENTADA")) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A tranca não pode estar LIVRE."
-            );
-        }
-        // 4. Validar motivo (fluxo principal x alternativo A1)
-        String motivo = dto.getMotivo() != null ? dto.getMotivo().toLowerCase() : "";
-        if (!motivo.equals("reparo") && !motivo.equals("aposentadoria")) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Motivo deve ser 'reparo' ou 'aposentadoria'."
+                    "statusAcaoReparador deve ser 'EM_REPARO' ou 'APOSENTADA'."
             );
         }
 
-        // 5. Definir status final
-        if (motivo.equals("reparo")) {
+        // 6. Definir status final da bicicleta
+        if (statusDestino.equals("EM_REPARO")) {
             bicicleta.setStatus(StatusBicicleta.EM_REPARO);
-        } else {
+        } else { // APOSENTADA
             bicicleta.setStatus(StatusBicicleta.APOSENTADA);
         }
 
@@ -256,36 +263,36 @@ public class BicicletaService {
         tranca.setBicicleta(null);
         tranca.setStatus(StatusTranca.LIVRE);
 
-        // 6. Registrar retirada (R1)
+        // 7. Registrar retirada (log)
         LocalDateTime agora = LocalDateTime.now();
         System.out.printf(
-                "[RETIRADA BICICLETA] dataHora=%s, idReparador=%d, idBicicleta=%d, idTranca=%d, motivo=%s%n",
+                "[RETIRADA BICICLETA] dataHora=%s, idFuncionario=%d, idBicicleta=%d, idTranca=%d, statusDestino=%s%n",
                 agora,
-                dto.getIdReparador(),
+                dto.getIdFuncionario(),
                 bicicleta.getId(),
                 tranca.getId(),
-                motivo
+                statusDestino
         );
 
-        // 7. Persistir alterações
+        // 8. Persistir alterações
         repository.saveAndFlush(bicicleta);
         trancaRepository.saveAndFlush(tranca);
 
-        // 8. Enviar email (R2) – com tratamento de erro [E2]
+        // 9. Enviar email (R2) – tratamento de erro [E2]
         try {
             String assunto = "Retirada de Bicicleta da Rede";
             String corpo = String.format(
-                    "A bicicleta %s (ID=%d) foi retirada da tranca %s (ID=%d) pelo reparador %d às %s. Motivo: %s.",
+                    "A bicicleta %s (ID=%d) foi retirada da tranca %s (ID=%d) pelo funcionário %d às %s. Destino: %s.",
                     bicicleta.getNumero(),
                     bicicleta.getId(),
                     tranca.getNumero(),
                     tranca.getId(),
-                    dto.getIdReparador(),
+                    dto.getIdFuncionario(),
                     agora.toString(),
-                    motivo
+                    statusDestino
             );
             String resultado = emailService.enviarEmail(
-                    "reparador@example.com",
+                    "reparador" + dto.getIdFuncionario() + "@empresa.com",
                     assunto,
                     corpo
             );
@@ -302,6 +309,7 @@ public class BicicletaService {
             );
         }
     }
+
 
     public Bicicleta alterarStatus(Integer idBicicleta, String acaoRaw) {
         Bicicleta bicicleta = repository.findById(idBicicleta)

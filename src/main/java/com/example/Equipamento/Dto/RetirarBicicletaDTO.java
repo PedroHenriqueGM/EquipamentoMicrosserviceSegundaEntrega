@@ -1,9 +1,12 @@
 package com.example.Equipamento.Dto;
 
 public class RetirarBicicletaDTO {
+
     private Long idTranca;
-    private Long idReparador;
-    private String motivo; // "reparo" ou "aposentadoria"
+    private Long idBicicleta;
+    private Long idFuncionario;
+    // Valores esperados: "APOSENTADA" ou "EM_REPARO"
+    private String statusAcaoReparador;
 
     public Long getIdTranca() {
         return idTranca;
@@ -13,19 +16,27 @@ public class RetirarBicicletaDTO {
         this.idTranca = idTranca;
     }
 
-    public Long getIdReparador() {
-        return idReparador;
+    public Long getIdBicicleta() {
+        return idBicicleta;
     }
 
-    public void setIdReparador(Long idReparador) {
-        this.idReparador = idReparador;
+    public void setIdBicicleta(Long idBicicleta) {
+        this.idBicicleta = idBicicleta;
     }
 
-    public String getMotivo() {
-        return motivo;
+    public Long getIdFuncionario() {
+        return idFuncionario;
     }
 
-    public void setMotivo(String motivo) {
-        this.motivo = motivo;
+    public void setIdFuncionario(Long idFuncionario) {
+        this.idFuncionario = idFuncionario;
+    }
+
+    public String getStatusAcaoReparador() {
+        return statusAcaoReparador;
+    }
+
+    public void setStatusAcaoReparador(String statusAcaoReparador) {
+        this.statusAcaoReparador = statusAcaoReparador;
     }
 }

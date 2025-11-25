@@ -265,7 +265,18 @@ public class TrancaService {
                         "Número da tranca inválido."
                 ));
 
-        // 2. Validar status “reparo solicitado”
+        // 2. (Opcional) validar se o totem informado bate com o da tranca
+        if (dto.getIdTotem() != null) {
+            Totem totemAtual = tranca.getTotem();
+            if (totemAtual == null || !dto.getIdTotem().equals(totemAtual.getId().longValue())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "A tranca não pertence ao totem informado."
+                );
+            }
+        }
+
+        // 3. Validar status “reparo solicitado”
         if (tranca.getStatus() != StatusTranca.REPARO_SOLICITADO) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -273,52 +284,49 @@ public class TrancaService {
             );
         }
 
-        // 3. Validar motivo
-        String motivo = dto.getMotivo().toLowerCase();
-        if (!motivo.equals("reparo") && !motivo.equals("aposentadoria")) {
+        // 4. Definir destino a partir de statusAcaoReparador
+        String statusDestino = dto.getStatusAcaoReparador() != null
+                ? dto.getStatusAcaoReparador().toUpperCase()
+                : "";
+
+        if (!statusDestino.equals("EM_REPARO") && !statusDestino.equals("APOSENTADA")) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Motivo deve ser 'reparo' ou 'aposentadoria'."
+                    "statusAcaoReparador deve ser 'EM_REPARO' ou 'APOSENTADA'."
             );
         }
 
-        // 4. Libertar tranca do totem
-        tranca = repository.findById(Math.toIntExact(dto.getIdTranca()))
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Número da tranca inválido."
-                ));
+        // 5. Desassociar do totem
+        tranca.setTotem(null);
 
-        tranca.setTotem(null);  // só ISSO já tira do totem
-
-
-        // 5. Alterar status final
-        if (motivo.equals("reparo")) {
+        // 6. Alterar status final
+        if (statusDestino.equals("EM_REPARO")) {
             tranca.setStatus(StatusTranca.EM_REPARO);
-        } else {
+        } else { // APOSENTADA
             tranca.setStatus(StatusTranca.APOSENTADA);
         }
 
-        // 6. Registrar retirada (R1)
+        // 7. Registrar retirada (R1)
         LocalDateTime agora = LocalDateTime.now();
         System.out.printf(
-                "[RETIRADA TRANCA] dataHora=%s, idReparador=%d, idTranca=%d, motivo=%s%n",
-                agora, dto.getIdReparador(), dto.getIdTranca(), motivo
+                "[RETIRADA TRANCA] dataHora=%s, idFuncionario=%d, idTranca=%d, statusDestino=%s%n",
+                agora, dto.getIdFuncionario(), dto.getIdTranca(), statusDestino
         );
 
-        // 7. Persistir
+        // 8. Persistir
         repository.saveAndFlush(tranca);
 
-        // 8. Enviar email (R2)
+        // 9. Enviar email (R2)
         try {
             emailService.enviarEmail(
-                    "reparador@example.com",
+                    "reparador" + dto.getIdFuncionario() + "@empresa.com",
                     "Retirada de Tranca",
                     String.format(
-                            "A tranca %d foi retirada pelo reparador %d às %s. Motivo: %s.",
+                            "A tranca %d foi retirada pelo funcionário %d às %s. Destino: %s.",
                             dto.getIdTranca(),
-                            dto.getIdReparador(),
+                            dto.getIdFuncionario(),
                             agora.toString(),
-                            motivo
+                            statusDestino
                     )
             );
         } catch (Exception e) {
@@ -328,6 +336,7 @@ public class TrancaService {
             );
         }
     }
+
 
     public Tranca alterarStatus(Integer idTranca, String acaoRaw) {
 
@@ -361,6 +370,13 @@ public class TrancaService {
                             "Só é possível DESTRANCAR quando a tranca está OCUPADA.");
                 }
                 tranca.setStatus(StatusTranca.LIVRE);
+                break;
+
+            case "REPARO_SOLICITADO":
+                tranca.setStatus(StatusTranca.REPARO_SOLICITADO);
+                break;
+            case "APOSENTADA":
+                tranca.setStatus(StatusTranca.APOSENTADA);
                 break;
 
             default:

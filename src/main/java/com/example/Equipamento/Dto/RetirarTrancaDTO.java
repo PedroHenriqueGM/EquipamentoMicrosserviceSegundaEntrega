@@ -1,16 +1,42 @@
 package com.example.Equipamento.Dto;
 
 public class RetirarTrancaDTO {
+
+    private Long idTotem;
     private Long idTranca;
-    private Long idReparador;
-    private String motivo; // "reparo" ou "aposentadoria"
+    private Long idFuncionario;
+    // "APOSENTADA" ou "EM_REPARO"
+    private String statusAcaoReparador;
 
-    public Long getIdTranca() { return idTranca; }
-    public void setIdTranca(Long idTranca) { this.idTranca = idTranca; }
+    public Long getIdTotem() {
+        return idTotem;
+    }
 
-    public Long getIdReparador() { return idReparador; }
-    public void setIdReparador(Long idReparador) { this.idReparador = idReparador; }
+    public void setIdTotem(Long idTotem) {
+        this.idTotem = idTotem;
+    }
 
-    public String getMotivo() { return motivo; }
-    public void setMotivo(String motivo) { this.motivo = motivo; }
+    public Long getIdTranca() {
+        return idTranca;
+    }
+
+    public void setIdTranca(Long idTranca) {
+        this.idTranca = idTranca;
+    }
+
+    public Long getIdFuncionario() {
+        return idFuncionario;
+    }
+
+    public void setIdFuncionario(Long idFuncionario) {
+        this.idFuncionario = idFuncionario;
+    }
+
+    public String getStatusAcaoReparador() {
+        return statusAcaoReparador;
+    }
+
+    public void setStatusAcaoReparador(String statusAcaoReparador) {
+        this.statusAcaoReparador = statusAcaoReparador;
+    }
 }

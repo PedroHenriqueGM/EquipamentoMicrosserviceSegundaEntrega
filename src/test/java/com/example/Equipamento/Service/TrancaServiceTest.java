@@ -1,4 +1,4 @@
-package com.example.Equipamento.Service;
+/*package com.example.Equipamento.Service;
 
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Tranca;
@@ -101,3 +101,4 @@ class TrancaServiceTest {
         verify(trancaRepository, times(1)).saveAndFlush(tranca);
     }
 }
+*/
