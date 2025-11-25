@@ -69,23 +69,38 @@ public class TrancaService {
 
     public void atualizarTrancaPorId(Integer id, Tranca req) {
         Tranca entity = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA
+                ));
 
+        // R2 – Todos os campos obrigatórios devem estar preenchidos
+        if (req.getModelo() == null || req.getModelo().isBlank() ||
+                req.getAno() == null ||
+                req.getLocalizacao() == null || req.getLocalizacao().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "R2: Todos os dados obrigatórios devem ser preenchidos para atualizar uma tranca."
+            );
+        }
+
+        // R3 – número não pode ser alterado
         if (req.getNumero() != null && !req.getNumero().equals(entity.getNumero())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "R3: o número da tranca não pode ser alterado.");
         }
 
-        // R1: status inicial é 'nova' e NÃO pode ser editado via PUT
+        // R1 – status inicial 'nova' não é editável
         if (req.getStatus() != null && !req.getStatus().equalsIgnoreCase(entity.getStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "R1: o status não pode ser editado."
+                    "R1: o status da tranca não pode ser alterado via atualização."
             );
         }
-        if (req.getModelo() != null) entity.setModelo(req.getModelo());
-        if (req.getAno() != null) entity.setAno(req.getAno());
-        if (req.getLocalizacao() != null) entity.setLocalizacao(req.getLocalizacao());
+
+        // Atualização completa
+        entity.setModelo(req.getModelo());
+        entity.setAno(req.getAno());
+        entity.setLocalizacao(req.getLocalizacao());
 
         repository.saveAndFlush(entity);
     }

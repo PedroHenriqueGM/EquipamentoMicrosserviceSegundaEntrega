@@ -79,32 +79,39 @@ public class BicicletaService {
 
     public void atualizarBicicletaPorId(Integer id, Bicicleta req) {
         Bicicleta entity = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_BICICLETA_NAO_ENCONTRADA));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, MSG_BICICLETA_NAO_ENCONTRADA
+                ));
 
-        // R3 + R5: numero é gerado pelo sistema (BIC-{id}) e NÃO pode ser alterado
-        // Se veio 'numero' diferente do atual, rejeita
+        // R2 – Todos os campos obrigatórios devem estar preenchidos
+        if (req.getMarca() == null || req.getMarca().isBlank() ||
+                req.getModelo() == null || req.getModelo().isBlank() ||
+                req.getAno() == null ||
+                req.getLocalizacao() == null || req.getLocalizacao().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "R2: Todos os dados obrigatórios devem ser preenchidos para atualizar uma bicicleta."
+            );
+        }
+
+        // R3 – Número não pode ser alterado
         if (req.getNumero() != null && !req.getNumero().equals(entity.getNumero())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "R3/R5: o número da bicicleta é gerado pelo sistema e não pode ser alterado."
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "R3: o número da bicicleta não pode ser alterado.");
         }
 
-        // R1: status inicial é 'nova' e NÃO pode ser editado via PUT
+        // R1 – Status não pode ser alterado via PUT
         if (req.getStatus() != null && !req.getStatus().equalsIgnoreCase(entity.getStatus())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "R1: o status não pode ser editado."
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "R1: o status da bicicleta não pode ser alterado diretamente.");
         }
 
-        // Atualiza somente campos permitidos
-        entity.setMarca(req.getMarca() != null ? req.getMarca() : entity.getMarca());
-        entity.setModelo(req.getModelo() != null ? req.getModelo() : entity.getModelo());
-        entity.setAno(req.getAno() != null ? req.getAno() : entity.getAno());
-        entity.setLocalizacao(req.getLocalizacao() != null ? req.getLocalizacao() : entity.getLocalizacao());
+        // Atualização
+        entity.setMarca(req.getMarca());
+        entity.setModelo(req.getModelo());
+        entity.setAno(req.getAno());
+        entity.setLocalizacao(req.getLocalizacao());
 
-        // Numero e Status permanecem como estão
         repository.saveAndFlush(entity);
     }
 
