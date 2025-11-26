@@ -35,7 +35,7 @@ public class TrancaService {
 
     private static final String MSG_TRANCA_NAO_ENCONTRADA = "Tranca não encontrada";
 
-    public void salvarTranca(Tranca tranca) {
+    public Tranca salvarTranca(Tranca tranca) {
 
         // R2 – Campos obrigatórios para cadastrar tranca
         if (tranca.getModelo() == null || tranca.getModelo().isBlank() ||
@@ -56,6 +56,7 @@ public class TrancaService {
 
         // Atualiza o registro já com número
         repository.saveAndFlush(salva);
+        return salva;
     }
 
     public void deletarTranca(Integer id) {
@@ -78,7 +79,7 @@ public class TrancaService {
         repository.saveAndFlush(tranca);
     }
 
-    public void atualizarTrancaPorId(Integer id, Tranca req) {
+    public Tranca atualizarTrancaPorId(Integer id, Tranca req) {
         Tranca entity = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA
@@ -112,72 +113,108 @@ public class TrancaService {
         entity.setLocalizacao(req.getLocalizacao());
 
         repository.saveAndFlush(entity);
+        return entity;
     }
 
-    public void trancar(Integer idTranca, String idBicicleta) {
+    @Transactional
+    public Tranca trancar(Integer idTranca, Integer idBicicleta) {
+
         Tranca tranca = repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA
+                        HttpStatus.NOT_FOUND,
+                        "Tranca não encontrada."
                 ));
-        // 🔒 Só pode trancar se estiver LIVRE
+
+        // Só pode TRANCAR se estiver LIVRE
         if (tranca.getStatus() != StatusTranca.LIVRE) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A tranca só pode ser TRANCADA quando está LIVRE."
             );
         }
+
         Bicicleta bike = null;
+
         if (idBicicleta != null) {
-            bike = bicicletaRepository.findByNumero(idBicicleta)
+            // Busca bicicleta pelo ID (não mais pelo número)
+            bike = bicicletaRepository.findById(idBicicleta)
                     .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Bicicleta não encontrada"
+                            HttpStatus.BAD_REQUEST,
+                            "Bicicleta não encontrada."
                     ));
-            // 🚨 Se já estiver presa em outra tranca → erro
-            if (repository.existsByBicicletaId(bike.getId())) {
+
+            // Verifica se já existe alguma tranca usando essa bicicleta
+            if (repository.existsByBicicletaId(idBicicleta)) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Esta bicicleta já está presa em outra tranca."
                 );
             }
-            // Apenas faz o vínculo
+
+            // Vincula bicicleta à tranca
             tranca.setBicicleta(bike);
+
+            // opcional: atualizar status da bicicleta
+            bike.setStatus(StatusBicicleta.DISPONIVEL);
+            bicicletaRepository.saveAndFlush(bike);
         }
+
         // Atualiza status da tranca
         tranca.setStatus(StatusTranca.OCUPADA);
         repository.saveAndFlush(tranca);
+
+        return tranca;
     }
 
 
-    public void destrancar(Integer idTranca) {
+    @Transactional
+    public Tranca destrancar(Integer idTranca, Integer idBicicleta) {
+
         Tranca tranca = repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, MSG_TRANCA_NAO_ENCONTRADA
+                        HttpStatus.NOT_FOUND,
+                        "Tranca não encontrada."
                 ));
-        // 🔓 Só pode destrancar se estiver OCUPADA
+
+        // Só pode destrancar quando está OCUPADA
         if (tranca.getStatus() != StatusTranca.OCUPADA) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A tranca só pode ser DESTRANCADA quando está OCUPADA."
             );
         }
+
         Bicicleta bike = tranca.getBicicleta();
-        // Se houver bicicleta presa, desassocia
-        if (bike != null) {
-            // ❗ Swagger não manda alterar status da bike
+
+        if (bike == null) {
+            if (idBicicleta != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Nenhuma bicicleta está presa nesta tranca."
+                );
+            }
+        } else {
+            // ✅ comparação corrigida aqui
+            if (idBicicleta != null && bike.getId() != idBicicleta.intValue()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "A bicicleta informada não corresponde à bicicleta presa na tranca."
+                );
+            }
+
+            // bicicleta sai da tranca → disponível
+            bike.setStatus(StatusBicicleta.DISPONIVEL);
+            bicicletaRepository.saveAndFlush(bike);
+
             tranca.setBicicleta(null);
         }
+
         tranca.setStatus(StatusTranca.LIVRE);
         repository.saveAndFlush(tranca);
+
+        return tranca;
     }
 
-
-    public List<Tranca> listarTrancasDoTotem(Long idTotem) {
-        if (!totemRepository.existsById(idTotem)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Totem não encontrado.");
-        }
-
-        return repository.findByTotemId(idTotem);
-    }
 
     @Transactional
     public void incluirTrancaNaRede(IntegrarTrancaNaRedeDTO dto) {
@@ -389,5 +426,37 @@ public class TrancaService {
         return repository.saveAndFlush(tranca);
     }
 
+    public Tranca buscarPorId(Integer idTranca) {
+        return repository.findById(idTranca)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Tranca não encontrada."
+                ));
+    }
 
+    public Bicicleta buscarBicicletaDaTranca(Integer idTranca) {
+        Tranca tranca = repository.findById(idTranca)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Tranca não encontrada."
+                ));
+
+        Bicicleta bicicleta = tranca.getBicicleta();
+        if (bicicleta == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Nenhuma bicicleta está associada a esta tranca."
+            );
+        }
+
+        return bicicleta;
+    }
+
+    public List<Tranca> listarTrancasDoTotem(Long idTotem) {
+        if (!totemRepository.existsById(idTotem)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Totem não encontrado.");
+        }
+
+        return repository.findByTotemId(idTotem);
+    }
 }

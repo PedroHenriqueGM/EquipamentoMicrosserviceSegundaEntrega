@@ -36,7 +36,7 @@ public class BicicletaService {
 
     private static final String MSG_BICICLETA_NAO_ENCONTRADA = "Bicicleta não encontrada";
 
-    public void incluirBicicleta(Bicicleta bicicleta) {
+    public Bicicleta incluirBicicleta(Bicicleta bicicleta) {
 
         // R2 – Campos obrigatórios para cadastrar bicicleta
         if (bicicleta.getMarca() == null || bicicleta.getMarca().isBlank() ||
@@ -59,6 +59,7 @@ public class BicicletaService {
 
         // Atualiza o registro já com número
         repository.saveAndFlush(salva);
+        return salva;
     }
 
     //private final TrancaRepository trancaRepository; // injete via construtor
@@ -88,7 +89,7 @@ public class BicicletaService {
     }
 
 
-    public void atualizarBicicletaPorId(Integer id, Bicicleta req) {
+    public Bicicleta atualizarBicicletaPorId(Integer id, Bicicleta req) {
         Bicicleta entity = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, MSG_BICICLETA_NAO_ENCONTRADA));
 
@@ -114,6 +115,7 @@ public class BicicletaService {
         entity.setLocalizacao(req.getLocalizacao());
 
         repository.saveAndFlush(entity);
+        return entity;
     }
 
     public List<Bicicleta> listarBicicletasDoTotem(Long idTotem) {

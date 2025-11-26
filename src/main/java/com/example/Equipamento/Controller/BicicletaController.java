@@ -7,69 +7,72 @@ import com.example.Equipamento.Repository.BicicletaRepository;
 import com.example.Equipamento.Service.BicicletaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static org.springframework.http.ResponseEntity.ok;
-
 @RestController
 @RequestMapping("/bicicleta")
 @RequiredArgsConstructor
 public class BicicletaController {
-    private final BicicletaService bicicletaService;
 
+    private final BicicletaService bicicletaService;
+    private final BicicletaRepository bicicletaRepository;
+
+    // POST /bicicleta  – retorna Bicicleta (Swagger: 200 + Bicicleta)
     @PostMapping
-    public ResponseEntity<Void> incluirBicicleta(@Valid @RequestBody Bicicleta bicicleta) {
-        bicicletaService.incluirBicicleta(bicicleta);
-        return ok().build();
+    public ResponseEntity<Bicicleta> incluirBicicleta(@Valid @RequestBody Bicicleta bicicleta) {
+        Bicicleta salva = bicicletaService.incluirBicicleta(bicicleta);
+        return ResponseEntity.ok(salva);
     }
 
-    @Autowired
-    private BicicletaRepository bicicletaRepository;
-
+    // GET /bicicleta – lista de bicicletas
     @GetMapping
     public ResponseEntity<List<Bicicleta>> listarBicicletas() {
         List<Bicicleta> bicicletas = bicicletaRepository.findAll();
-        return ok(bicicletas);
+        return ResponseEntity.ok(bicicletas);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Bicicleta> buscarPorId(@PathVariable Integer id){
-        return ok(bicicletaService.buscarPorId(id));
+    // GET /bicicleta/{idBicicleta}
+    @GetMapping("/{idBicicleta}")
+    public ResponseEntity<Bicicleta> buscarPorId(@PathVariable Integer idBicicleta) {
+        return ResponseEntity.ok(bicicletaService.buscarPorId(idBicicleta));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletarBicicleta(@PathVariable Integer id) {
-        bicicletaService.deletarBicicleta(id);
-        return ResponseEntity.ok("Bicicleta excluída com sucesso.");
+    // DELETE /bicicleta/{idBicicleta} – 200 sem corpo
+    @DeleteMapping("/{idBicicleta}")
+    public ResponseEntity<Void> deletarBicicleta(@PathVariable Integer idBicicleta) {
+        bicicletaService.deletarBicicleta(idBicicleta);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> atualizarBicicletaPorId(
-            @PathVariable Integer id,
+    // PUT /bicicleta/{idBicicleta} – 200 + Bicicleta atualizada
+    @PutMapping("/{idBicicleta}")
+    public ResponseEntity<Bicicleta> atualizarBicicletaPorId(
+            @PathVariable Integer idBicicleta,
             @RequestBody Bicicleta bicicleta) {
-        bicicletaService.atualizarBicicletaPorId(id, bicicleta);
-        return ok().build();
+
+        Bicicleta atualizada = bicicletaService.atualizarBicicletaPorId(idBicicleta, bicicleta);
+        return ResponseEntity.ok(atualizada);
     }
 
+    // POST /bicicleta/integrarNaRede – 200 sem corpo (Swagger: Dados cadastrados)
     @PostMapping("/integrarNaRede")
     public ResponseEntity<Void> incluirNaRede(@RequestBody IncluirBicicletaDTO dto) {
-
         bicicletaService.incluirBicicletaNaRede(dto);
-
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.ok().build();
     }
 
+    // POST /bicicleta/retirarDaRede – 200 sem corpo (Swagger: Dados cadastrados)
     @PostMapping("/retirarDaRede")
-    public ResponseEntity<String> retirarDaRede(@RequestBody RetirarBicicletaDTO dto) {
+    public ResponseEntity<Void> retirarDaRede(@RequestBody RetirarBicicletaDTO dto) {
         bicicletaService.retirarBicicleta(dto);
-        return ResponseEntity.ok("Bicicleta retirada com sucesso.");
+        return ResponseEntity.ok().build();
     }
 
+    // POST /bicicleta/{idBicicleta}/status/{acao} – 200 + Bicicleta
     @PostMapping("/{idBicicleta}/status/{acao}")
     public ResponseEntity<Bicicleta> alterarStatusBicicleta(
             @PathVariable Integer idBicicleta,
@@ -78,7 +81,4 @@ public class BicicletaController {
         Bicicleta atualizada = bicicletaService.alterarStatus(idBicicleta, acao);
         return ResponseEntity.ok(atualizada);
     }
-
-
-
 }
