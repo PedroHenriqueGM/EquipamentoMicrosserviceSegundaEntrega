@@ -269,7 +269,7 @@ class TrancaServiceTest {
 
         RetirarTrancaDTO dto = new RetirarTrancaDTO();
         dto.setIdTranca(1L);
-        // dto.setIdTotem(1L);  
+        // dto.setIdTotem(1L);
         dto.setIdFuncionario(123L);
         dto.setStatusAcaoReparador("EM_REPARO");
 

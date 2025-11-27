@@ -22,9 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Testes unitários para TotemService
- */
 class TotemServiceTest {
 
     @Mock
@@ -40,9 +37,10 @@ class TotemServiceTest {
         MockitoAnnotations.openMocks(this);
 
         totem = new Totem();
-        totem.setId(1L);
+        totem.setId(1L);                 // o setter está vazio, mas não usamos o id nas asserções
         totem.setDescricao("Totem Central");
         totem.setLocalizacao("Praça Central");
+        // por padrão, a lista de trancas vem vazia (size = 0)
     }
 
     @Test
@@ -80,7 +78,6 @@ class TotemServiceTest {
 
     @Test
     void deveLancarExcecao_QuandoTotemPossuiTrancas() {
-        // simula totem com trancas
         Totem t = new Totem();
         t.setId(2L);
         Tranca tranca = new Tranca();
@@ -93,5 +90,27 @@ class TotemServiceTest {
 
         assertThat(ex.getStatusCode().value()).isEqualTo(400);
         assertThat(ex.getReason()).contains("Totem possui trancas");
+    }
+
+    @Test
+    void deveAtualizarTotemComSucesso() {
+        when(totemRepository.findById(1L)).thenReturn(Optional.of(totem));
+        when(totemRepository.saveAndFlush(any(Totem.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        NovoTotemDTO dto = new NovoTotemDTO(
+                "Nova Localização",
+                "Descrição atualizada do totem"
+        );
+
+        TotemDTO resultado = totemService.atualizarTotem(1L, dto);
+
+        assertThat(resultado.localizacao()).isEqualTo("Nova Localização");
+        assertThat(resultado.descricao()).isEqualTo("Descrição atualizada do totem");
+        // como não adicionamos trancas no setUp, o totalTrancas é 0
+        assertThat(resultado.totalTrancas()).isEqualTo(0);
+
+        verify(totemRepository, times(1)).findById(1L);
+        verify(totemRepository, times(1)).saveAndFlush(any(Totem.class));
     }
 }

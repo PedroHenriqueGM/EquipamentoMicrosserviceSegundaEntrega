@@ -39,6 +39,30 @@ public class TotemService {
         return toDTO(totemSalvo);
     }
 
+    public TotemDTO atualizarTotem(Long idTotem, NovoTotemDTO dto) {
+        Totem totem = repository.findById(idTotem)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Totem não encontrado."
+                ));
+
+        // Aqui, como os casos de uso não colocam restrição extra,
+        // só garantimos que localizacao e descricao não sejam vazias.
+        if (dto.localizacao() == null || dto.localizacao().isBlank()
+                || dto.descricao() == null || dto.descricao().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Localização e descrição são obrigatórias para atualizar o totem."
+            );
+        }
+
+        totem.setLocalizacao(dto.localizacao());
+        totem.setDescricao(dto.descricao());
+
+        Totem salvo = repository.saveAndFlush(totem);
+        return toDTO(salvo);
+    }
+
     @Transactional
     public void excluirTotem(Long id) {
         Totem totem = repository.findById(id)

@@ -42,7 +42,16 @@ public class TotemController {
         URI location = URI.create("/totem/" + totemSalvo.id());
         return ResponseEntity.created(location).body(totemSalvo);
     }
-   
+
+    @PutMapping("/{idTotem}")
+    public ResponseEntity<TotemDTO> atualizarTotem(
+            @PathVariable Long idTotem,
+            @Valid @RequestBody NovoTotemDTO dto) {
+
+        TotemDTO atualizado = totemService.atualizarTotem(idTotem, dto);
+        return ResponseEntity.ok(atualizado);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> excluirTotem(@PathVariable Long id) {
         totemService.excluirTotem(id);
