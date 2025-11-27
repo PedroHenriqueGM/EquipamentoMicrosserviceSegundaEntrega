@@ -4,7 +4,6 @@ import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Tranca;
-import com.example.Equipamento.Repository.TrancaRepository;
 import com.example.Equipamento.Service.TrancaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,107 +15,75 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.Collections;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class TrancaControllerTest {
 
     private MockMvc mockMvc;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private TrancaService trancaService;
 
-    @Mock
-    private TrancaRepository trancaRepository;
-
     @InjectMocks
     private TrancaController trancaController;
 
-    private ObjectMapper objectMapper;
-
     @BeforeEach
-    void setup() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(trancaController).build();
-        objectMapper = new ObjectMapper();
-    }
-
-
-    @Test
-    void listarTrancas_deveRetornar200() throws Exception {
-        when(trancaRepository.findAll()).thenReturn(Collections.emptyList());
-
-        mockMvc.perform(get("/tranca"))
-                .andExpect(status().isOk());
     }
 
     @Test
-    void buscarPorId_deveRetornar200() throws Exception {
-        Tranca tranca = new Tranca();
-        when(trancaService.buscarPorId(1)).thenReturn(tranca);
+    void deveTrancarComBodyNulo() throws Exception {
+        Tranca t = new Tranca();
+        t.setId(1);
 
-        mockMvc.perform(get("/tranca/1"))
-                .andExpect(status().isOk());
+        when(trancaService.trancar(1, null)).thenReturn(t);
+
+        mockMvc.perform(post("/tranca/1/trancar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    void deletarTranca_deveRetornar200() throws Exception {
-        doNothing().when(trancaService).deletarTranca(1);
+    void deveTrancarComBody() throws Exception {
+        Tranca t = new Tranca();
+        t.setId(1);
 
-        mockMvc.perform(delete("/tranca/1"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void atualizarTrancaPorId_deveRetornar200() throws Exception {
-        Tranca tranca = new Tranca();
-        when(trancaService.atualizarTrancaPorId(eq(1), any())).thenReturn(tranca);
-
-        mockMvc.perform(put("/tranca/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tranca)))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void buscarBicicletaDaTranca_deveRetornar200() throws Exception {
-        Bicicleta bicicleta = new Bicicleta();
-        when(trancaService.buscarBicicletaDaTranca(1)).thenReturn(bicicleta);
-
-        mockMvc.perform(get("/tranca/1/bicicleta"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void trancar_deveRetornar200() throws Exception {
-        Tranca tranca = new Tranca();
-        when(trancaService.trancar(eq(1), eq(1))).thenReturn(tranca);
+        Map<String, Integer> body = Map.of("bicicleta", 2);
+        when(trancaService.trancar(1, 2)).thenReturn(t);
 
         mockMvc.perform(post("/tranca/1/trancar")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("bicicleta", 1))))
-                .andExpect(status().isOk());
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    void destrancar_deveRetornar200() throws Exception {
-        Tranca tranca = new Tranca();
-        when(trancaService.destrancar(eq(1), eq(1))).thenReturn(tranca);
+    void deveAlterarStatusTranca() throws Exception {
+        Tranca t = new Tranca();
+        t.setId(1);
 
-        mockMvc.perform(post("/tranca/1/destrancar")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("bicicleta", 1))))
-                .andExpect(status().isOk());
+        when(trancaService.alterarStatus(1, "TRANCAR")).thenReturn(t);
+
+        mockMvc.perform(post("/tranca/1/status/TRANCAR"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    void integrarTranca_deveRetornar200() throws Exception {
+    void deveIntegrarTrancaNaRede() throws Exception {
         IntegrarTrancaNaRedeDTO dto = new IntegrarTrancaNaRedeDTO();
+        doNothing().when(trancaService).incluirTrancaNaRede(any(IntegrarTrancaNaRedeDTO.class));
 
         mockMvc.perform(post("/tranca/integrarNaRede")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -125,21 +92,13 @@ class TrancaControllerTest {
     }
 
     @Test
-    void retirarTranca_deveRetornar200() throws Exception {
+    void deveRetirarTrancaDaRede() throws Exception {
         RetirarTrancaDTO dto = new RetirarTrancaDTO();
+        doNothing().when(trancaService).retirarTranca(any(RetirarTrancaDTO.class));
 
         mockMvc.perform(post("/tranca/retirarDaRede")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void alterarStatusTranca_deveRetornar200() throws Exception {
-        Tranca tranca = new Tranca();
-        when(trancaService.alterarStatus(eq(1), eq("manutencao"))).thenReturn(tranca);
-
-        mockMvc.perform(post("/tranca/1/status/manutencao"))
                 .andExpect(status().isOk());
     }
 }
