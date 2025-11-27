@@ -122,7 +122,7 @@ public class TrancaService {
         Tranca tranca = repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Tranca não encontrada."
+                        MSG_TRANCA_NAO_ENCONTRADA
                 ));
 
         // Só pode TRANCAR se estiver LIVRE
@@ -173,7 +173,7 @@ public class TrancaService {
         Tranca tranca = repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Tranca não encontrada."
+                        MSG_TRANCA_NAO_ENCONTRADA
                 ));
 
         // Só pode destrancar quando está OCUPADA
@@ -430,7 +430,7 @@ public class TrancaService {
         return repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Tranca não encontrada."
+                        MSG_TRANCA_NAO_ENCONTRADA
                 ));
     }
 
@@ -438,7 +438,7 @@ public class TrancaService {
         Tranca tranca = repository.findById(idTranca)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Tranca não encontrada."
+                        MSG_TRANCA_NAO_ENCONTRADA
                 ));
 
         Bicicleta bicicleta = tranca.getBicicleta();
