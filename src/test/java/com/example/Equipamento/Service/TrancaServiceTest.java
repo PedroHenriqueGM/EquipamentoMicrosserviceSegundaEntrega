@@ -47,6 +47,8 @@ class TrancaServiceTest {
     private Bicicleta bicicleta;
     private Totem totem;
 
+    private static final String MODELO = "NovoModelo";
+
     @BeforeEach
     void setUp() {
         tranca = new Tranca();
@@ -146,13 +148,13 @@ class TrancaServiceTest {
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
 
         Tranca req = new Tranca();
-        req.setModelo("NovoModelo");
+        req.setModelo(MODELO);
         req.setAno("2025");
         req.setLocalizacao("Totem Norte");
 
         Tranca atualizada = trancaService.atualizarTrancaPorId(1, req);
 
-        assertThat(atualizada.getModelo()).isEqualTo("NovoModelo");
+        assertThat(atualizada.getModelo()).isEqualTo(MODELO);
         assertThat(atualizada.getAno()).isEqualTo("2025");
         assertThat(atualizada.getLocalizacao()).isEqualTo("Totem Norte");
         // numero e status não mudam
@@ -167,7 +169,7 @@ class TrancaServiceTest {
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
 
         Tranca req = new Tranca();
-        req.setModelo("NovoModelo");
+        req.setModelo(MODELO);
         req.setAno("2025");
         req.setNumero("OUTRO");
 
