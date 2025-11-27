@@ -1,7 +1,7 @@
 package com.example.Equipamento.Service;
 
-import com.example.Equipamento.Dto.TotemDTO;
 import com.example.Equipamento.Dto.NovoTotemDTO;
+import com.example.Equipamento.Dto.TotemDTO;
 import com.example.Equipamento.Model.Totem;
 import com.example.Equipamento.Repository.TotemRepository;
 import org.springframework.stereotype.Service;

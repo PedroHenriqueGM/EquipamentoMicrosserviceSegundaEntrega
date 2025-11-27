@@ -29,7 +29,7 @@ public class Totem {
     public List<Tranca> getTrancas() { return trancas; }
     public void setTrancas(List<Tranca> trancas) { this.trancas = trancas; }
 
-    public void setId(long id) {
+    public void setId(long l) {
         this.id = id;
     }
 }
