@@ -3,7 +3,7 @@ package com.example.Equipamento.Dto;
 public class IncluirBicicletaDTO {
     private Long idBicicleta;
     private Long idTranca;
-    private Long idReparador; // ou matricula, como você estiver usando
+    private Long idReparador; 
 
     public Long getIdBicicleta() {
         return idBicicleta;
