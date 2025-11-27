@@ -1,6 +1,5 @@
 package com.example.Equipamento.Controller;
 
-import com.example.Equipamento.Dto.NovoTotemDTO;
 import com.example.Equipamento.Dto.TotemDTO;
 import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Tranca;
