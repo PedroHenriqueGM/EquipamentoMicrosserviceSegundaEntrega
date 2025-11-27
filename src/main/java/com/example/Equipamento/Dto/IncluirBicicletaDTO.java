@@ -9,7 +9,7 @@ public class IncluirBicicletaDTO {
         return idBicicleta;
     }
 
-    public void setIdBicicicleta(Long idBicicleta) {
+    public void setIdBicicleta(Long idBicicleta) {
         this.idBicicleta = idBicicleta;
     }
 
