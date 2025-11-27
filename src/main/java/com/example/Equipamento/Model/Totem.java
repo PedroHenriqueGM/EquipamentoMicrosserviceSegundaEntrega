@@ -30,5 +30,6 @@ public class Totem {
     public void setTrancas(List<Tranca> trancas) { this.trancas = trancas; }
 
     public void setId(long l) {
+        this.id = id;
     }
 }
