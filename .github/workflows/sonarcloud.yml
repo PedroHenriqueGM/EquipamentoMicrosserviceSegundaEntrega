@@ -29,10 +29,11 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: "https://sonarcloud.io"
         with:
           args: >
-            -Dsonar.projectKey=PedroHenriqueGM_EquipamentoMicrosservice
-            -Dsonar.organization=PedroHenriqueGM
+            -Dsonar.projectKey=PedroHenriqueGM_EquipamentoMicrosserviceSegundaEntrega
+            -Dsonar.organization=pedrohenriquegm
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.java.binaries=target/classes
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
