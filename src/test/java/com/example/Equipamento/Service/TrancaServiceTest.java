@@ -177,4 +177,28 @@ class TrancaServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Nenhuma bicicleta está associada");
     }
+
+    @Test
+    void deveFalharSeIdTotemForDiferente() {
+        Tranca tranca = new Tranca();
+        tranca.setId(1);
+        tranca.setStatus(StatusTranca.REPARO_SOLICITADO);
+
+        Totem totemMock = mock(Totem.class);
+        when(totemMock.getId()).thenReturn(1L); // 👈 evita o NullPointer
+        tranca.setTotem(totemMock);
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+
+        RetirarTrancaDTO dto = new RetirarTrancaDTO();
+        dto.setIdTranca(1L);
+        dto.setIdTotem(2L); // diferente de 1 → deve falhar
+        dto.setIdFuncionario(99L);
+        dto.setStatusAcaoReparador("EM_REPARO");
+
+        assertThatThrownBy(() -> trancaService.retirarTranca(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("A tranca não pertence ao totem informado");
+    }
+
 }
