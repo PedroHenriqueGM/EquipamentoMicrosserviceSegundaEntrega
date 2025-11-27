@@ -45,13 +45,18 @@ class BicicletaServiceTest {
 
     private Bicicleta bicicleta;
 
+    private static final String NUMERO_BICICLETA = "BIC-1";
+    private static final String MARCA = "Caloi";
+    private static final String MARCA2 = "Sense";
+    private static final String MODELO = "Impact SL";
+
     @BeforeEach
     void setUp() {
         bicicleta = new Bicicleta();
         bicicleta.setId(1);
-        bicicleta.setNumero("BIC-1");
+        bicicleta.setNumero(NUMERO_BICICLETA);
         bicicleta.setStatus(StatusBicicleta.NOVA);
-        bicicleta.setMarca("Caloi");
+        bicicleta.setMarca(MARCA);
         bicicleta.setModelo("Elite");
         bicicleta.setAno("2023");
         bicicleta.setLocalizacao("Totem Centro");
@@ -75,7 +80,7 @@ class BicicletaServiceTest {
                 });
 
         Bicicleta nova = Bicicleta.builder()
-                .marca("Caloi")
+                .marca(MARCA)
                 .modelo("Elite")
                 .localizacao("Centro")
                 .ano("2023")
@@ -116,8 +121,8 @@ class BicicletaServiceTest {
 
         Bicicleta encontrada = bicicletaService.buscarPorId(1);
 
-        assertThat(encontrada.getNumero()).isEqualTo("BIC-1");
-        assertThat(encontrada.getMarca()).isEqualTo("Caloi");
+        assertThat(encontrada.getNumero()).isEqualTo(NUMERO_BICICLETA);
+        assertThat(encontrada.getMarca()).isEqualTo(MARCA);
         verify(bicicletaRepository, times(1)).findById(1);
     }
 
@@ -139,19 +144,19 @@ class BicicletaServiceTest {
         when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bicicleta));
 
         Bicicleta req = new Bicicleta();
-        req.setMarca("Sense");
-        req.setModelo("Impact SL");
+        req.setMarca(MARCA2);
+        req.setModelo(MODELO);
         req.setAno("2024"); // obrigatório
         req.setLocalizacao("Totem Norte");
 
         Bicicleta atualizada = bicicletaService.atualizarBicicletaPorId(1, req);
 
-        assertThat(atualizada.getMarca()).isEqualTo("Sense");
-        assertThat(atualizada.getModelo()).isEqualTo("Impact SL");
+        assertThat(atualizada.getMarca()).isEqualTo(MARCA2);
+        assertThat(atualizada.getModelo()).isEqualTo(MODELO);
         assertThat(atualizada.getAno()).isEqualTo("2024");
         assertThat(atualizada.getLocalizacao()).isEqualTo("Totem Norte");
         // número e status permanecem os mesmos
-        assertThat(atualizada.getNumero()).isEqualTo("BIC-1");
+        assertThat(atualizada.getNumero()).isEqualTo(NUMERO_BICICLETA);
         assertThat(atualizada.getStatus()).isEqualTo(StatusBicicleta.NOVA);
 
         verify(bicicletaRepository, times(1)).saveAndFlush(bicicleta);
@@ -162,8 +167,8 @@ class BicicletaServiceTest {
         when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bicicleta));
 
         Bicicleta req = new Bicicleta();
-        req.setMarca("Sense");
-        req.setModelo("Impact SL");
+        req.setMarca(MARCA2);
+        req.setModelo(MODELO);
         req.setAno("2024");
         req.setNumero("OUTRO-NUMERO");
 
@@ -179,8 +184,8 @@ class BicicletaServiceTest {
         when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bicicleta));
 
         Bicicleta req = new Bicicleta();
-        req.setMarca("Sense");
-        req.setModelo("Impact SL");
+        req.setMarca(MARCA2);
+        req.setModelo(MODELO);
         req.setAno("2024");
         req.setStatus(StatusBicicleta.DISPONIVEL); // tentativa de alterar status
 
