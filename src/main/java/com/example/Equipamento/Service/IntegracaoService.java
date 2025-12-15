@@ -28,11 +28,12 @@ public class IntegracaoService {
     }
 
 
-    public EmailDTO enviarEmail(Long id) {
-        return webClient.get()
+    public void enviarEmail(EmailDTO email) {
+        webClient.post()
                 .uri(serviceCUrl + "/enviarEmail")
+                .bodyValue(email)
                 .retrieve()
-                .bodyToMono(EmailDTO.class)
+                .toBodilessEntity()
                 .block();
     }
 }

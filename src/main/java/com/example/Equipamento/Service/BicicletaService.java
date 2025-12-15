@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.EmailDTO;
 import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IncluirBicicletaDTO;
 import com.example.Equipamento.Dto.RetirarBicicletaDTO;
@@ -207,6 +208,19 @@ public class BicicletaService {
 
         repository.saveAndFlush(bicicleta);
         trancaRepository.saveAndFlush(tranca);
+
+        //8. Enviar email
+        EmailDTO email = new EmailDTO();
+        email.setEmail(funcionario.getEmail());
+        email.setAssunto("Inclusão de bicicleta na rede de totens");
+        email.setMensagem("Bicicleta: " + bicicleta.getNumero() + " | Tranca: " + tranca.getNumero() + " | Data/Hora: " + java.time.LocalDateTime.now());
+
+        try {
+            integracaoService.enviarEmail(email);
+        } catch (Exception e) {
+            // [E2] erro no envio do email
+            throw new RuntimeException("Não foi possível enviar o email ao reparador.", e);
+        }
 
     }
 
