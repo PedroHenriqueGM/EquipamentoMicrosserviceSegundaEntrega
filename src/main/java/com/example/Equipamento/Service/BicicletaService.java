@@ -146,7 +146,7 @@ public class BicicletaService {
                         "Bicicleta não encontrada."
                 ));
 
-        //Validar funcionario
+        // 2. Validar funcionário (reparador)
         FuncionarioDTO funcionario;
         try {
             funcionario = integracaoService.buscarFuncionario(dto.getIdReparador());
@@ -157,80 +157,92 @@ public class BicicletaService {
             );
         }
 
+        // 3. Validar status da bicicleta
+        if (bicicleta.getStatus() != StatusBicicleta.NOVA &&
+                bicicleta.getStatus() != StatusBicicleta.EM_REPARO) {
 
-        // 2. Validar status — deve ser nova ou em_reparo
-        StatusBicicleta status = bicicleta.getStatus();
-        if (status != StatusBicicleta.NOVA && status != StatusBicicleta.EM_REPARO) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Bicicleta deve estar com status NOVA ou EM_REPARO.");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Bicicleta deve estar com status NOVA ou EM_REPARO."
+            );
         }
 
-        // 3. Validar reparador no caso EM_REPARO
-        if (status == StatusBicicleta.EM_REPARO) {
+        // 4. Se estiver EM_REPARO, validar reparador
+        if (bicicleta.getStatus() == StatusBicicleta.EM_REPARO) {
 
-                if (bicicleta.getReparador() == null) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Bicicleta em reparo não possui reparador associado."
-                    );
-                }
+            if (bicicleta.getReparador() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Bicicleta em reparo não possui reparador associado."
+                );
+            }
 
-                if (!bicicleta.getReparador().equals(dto.getIdReparador())) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "O reparador que está devolvendo a bicicleta não é o mesmo que retirou para reparo."
-                    );
-                }
+            if (!bicicleta.getReparador().equals(dto.getIdReparador())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "O reparador que está devolvendo a bicicleta não é o mesmo que retirou para reparo."
+                );
+            }
         }
 
-        // 4. Buscar tranca
+        // 5. Buscar tranca
         Tranca tranca = trancaRepository.findById(Math.toIntExact(dto.getIdTranca()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Tranca não encontrada."
                 ));
 
-        /// 5. Tranca deve estar LIVRE
+        // 6. Tranca deve estar LIVRE
         if (tranca.getStatus() != StatusTranca.LIVRE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "A tranca deve estar LIVRE para receber bicicleta.");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A tranca deve estar LIVRE para receber bicicleta."
+            );
         }
 
-        // 6. Registrar log
-        LocalDateTime agora = LocalDateTime.now();
-        System.out.printf(
-                "[INCLUSAO BICICLETA] dataHora=%s, idReparador=%d, idBicicleta=%d, idTranca=%d%n",
-                agora, dto.getIdReparador(), bicicleta.getId(), tranca.getId()
-        );
-
-        // 7. Atualizar associações
+        // 7. Atualizar estado
         bicicleta.setStatus(StatusBicicleta.DISPONIVEL);
+        bicicleta.setReparador(null); // limpa reparador ao voltar para rede
         tranca.setBicicleta(bicicleta);
 
         repository.saveAndFlush(bicicleta);
         trancaRepository.saveAndFlush(tranca);
 
-        // 8. Enviar email
+        // 8. Log
+        LocalDateTime agora = LocalDateTime.now();
+        System.out.printf(
+                "[INCLUSAO BICICLETA] dataHora=%s, reparador=%s, idBicicleta=%d, idTranca=%d%n",
+                agora,
+                dto.getIdReparador(),
+                bicicleta.getId(),
+                tranca.getId()
+        );
+
+        // 9. Enviar email
         try {
             String assunto = "Inclusão de Bicicleta na Rede";
-            String corpo = "A bicicleta " + bicicleta.getNumero() +
-                    " foi incluída na tranca " + tranca.getId() +
-                    " em " + agora + ".";
+            String corpo = String.format(
+                    "A bicicleta %s foi incluída na tranca %d em %s.",
+                    bicicleta.getNumero(),
+                    tranca.getId(),
+                    agora
+            );
 
             String resultado = emailService.enviarEmail(
-                    "reparador" + dto.getIdReparador() + "@empresa.com",
+                    funcionario.getEmail(),
                     assunto,
                     corpo
             );
 
-            if (!resultado.equalsIgnoreCase("sucesso")) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Erro ao enviar o email.");
+            if (!"sucesso".equalsIgnoreCase(resultado)) {
+                throw new RuntimeException();
             }
 
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Erro ao enviar o email.");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Erro ao enviar o email."
+            );
         }
     }
 
