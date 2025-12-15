@@ -28,9 +28,9 @@ public class IntegracaoService {
     }
 
 
-    public EmailDTO chamaC(Long id) {
+    public EmailDTO enviarEmail(Long id) {
         return webClient.get()
-                .uri(serviceCUrl + "/enviarEmail", id)
+                .uri(serviceCUrl + "/enviarEmail")
                 .retrieve()
                 .bodyToMono(EmailDTO.class)
                 .block();
