@@ -226,14 +226,14 @@ public class TrancaService {
                         HttpStatus.NOT_FOUND, "Totem não encontrado."
                 ));
 
-        // 2. Buscar tranca pelo ID [E1]
+        // 2. Buscar tranca pelo ID
         Tranca tranca = repository.findById(dto.getIdTranca())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Tranca não encontrada (id incorreto ou não cadastrada)."
                 ));
 
-        // 3. Validar funcionário (reparador)
+        // 3. Buscar funcionário (reparador) pelo serviço externo
         FuncionarioDTO funcionario;
         try {
             funcionario = integracaoService.buscarFuncionario(dto.getIdReparador());
@@ -244,7 +244,7 @@ public class TrancaService {
             );
         }
 
-        // 4. Validar status: deve ser "nova" ou "em_reparo"
+        // 4. Validar status da tranca
         if (tranca.getStatus() != StatusTranca.NOVA &&
                 tranca.getStatus() != StatusTranca.EM_REPARO) {
             throw new ResponseStatusException(
@@ -253,7 +253,7 @@ public class TrancaService {
             );
         }
 
-        // 5. R3 – Em reparo, verificar se funcionario é o mesmo
+        // 5. Regra R3 – se EM_REPARO, validar mesmo reparador
         if (tranca.getStatus() == StatusTranca.EM_REPARO) {
 
             if (tranca.getReparador() == null) {
@@ -273,29 +273,30 @@ public class TrancaService {
 
         // 6. Vincular tranca ao totem
         tranca.setTotem(totem);
-
-        if (totem.getTrancas() != null && !totem.getTrancas().contains(tranca)) {
-            totem.getTrancas().add(tranca);
-        }
-
-        // 7. Alterar status para "disponível" → "livre"
         tranca.setStatus(StatusTranca.LIVRE);
 
-        // 8. Persistir
         repository.saveAndFlush(tranca);
-        totemRepository.saveAndFlush(totem);
 
-        // 9. Montar e enviar e-mail ao reparador
+        // 7. Validar dados obrigatórios para envio de e-mail (evita 422)
+        if (funcionario.getEmail() == null || funcionario.getEmail().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reparador não possui e-mail cadastrado."
+            );
+        }
+
+        // 8. Montar e-mail conforme o DTO NovoEmail do serviço externo
         EmailDTO email = new EmailDTO();
         email.setEmail(funcionario.getEmail());
         email.setAssunto("Inclusão de tranca na rede de totens");
         email.setMensagem(
-                "Tranca: " + tranca.getNumero() +
-                        " | Totem: " + totem.getId() +
-                        " | Status final: " + tranca.getStatus() +
-                        " | Data/Hora: " + java.time.LocalDateTime.now()
+                "Data/Hora: " + LocalDateTime.now() +
+                        " | Matrícula do reparador: " + dto.getIdReparador() +
+                        " | Tranca: " + tranca.getNumero() +
+                        " | Totem: " + totem.getId()
         );
 
+        // 9. Enviar e-mail (POST válido → evita 422)
         try {
             integracaoService.enviarEmail(email);
         } catch (Exception e) {
@@ -304,9 +305,9 @@ public class TrancaService {
                     "Não foi possível enviar o email ao reparador. Detalhe: " + e.getMessage()
             );
         }
-
-
     }
+
+    
     @Transactional
     public void retirarTranca(RetirarTrancaDTO dto) {
 
