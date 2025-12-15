@@ -237,7 +237,7 @@ public class TrancaService {
         // 3. Validar funcionário (reparador)
         FuncionarioDTO funcionario;
         try {
-            funcionario = integracaoService.buscarFuncionario(dto.getIdFuncionario());
+            funcionario = integracaoService.buscarFuncionario(dto.getIdReparador());
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -264,7 +264,7 @@ public class TrancaService {
                 );
             }
 
-            if (!tranca.getReparador().equals(dto.getIdFuncionario())) {
+            if (!tranca.getReparador().equals(dto.getIdReparador())) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "O reparador que está devolvendo a tranca não é o mesmo que retirou para reparo."

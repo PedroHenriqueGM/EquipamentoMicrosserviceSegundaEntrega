@@ -4,7 +4,7 @@ public class IntegrarTrancaNaRedeDTO {
 
     private Long idTotem;
     private int idTranca;
-    private String idFuncionario;
+    private String idReparador;
 
     public Long getIdTotem() {
         return idTotem;
@@ -22,11 +22,11 @@ public class IntegrarTrancaNaRedeDTO {
         this.idTranca = idTranca;
     }
 
-    public String getIdFuncionario() {
-        return idFuncionario;
+    public String getIdReparador() {
+        return idReparador;
     }
 
-    public void setIdFuncionario(String idFuncionario) {
-        this.idFuncionario = idFuncionario;
+    public void setIdReparador(String idFuncionario) {
+        this.idReparador = idFuncionario;
     }
 }
