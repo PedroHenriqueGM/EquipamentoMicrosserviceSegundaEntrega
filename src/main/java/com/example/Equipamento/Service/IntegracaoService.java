@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.EmailDTO;
 import com.example.Equipamento.Dto.FuncionarioDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,13 +27,13 @@ public class IntegracaoService {
                 .block();
     }
 
-/*
-    public ResultadoCDTO chamaC(Long id) {
+
+    public EmailDTO chamaC(Long id) {
         return webClient.get()
                 .uri(serviceCUrl + "/enviarEmail", id)
                 .retrieve()
-                .bodyToMono(ResultadoCDTO.class)
+                .bodyToMono(EmailDTO.class)
                 .block();
-    }*/
+    }
 }
 
