@@ -295,6 +295,9 @@ public class TrancaService {
                         " | Status final: " + tranca.getStatus() +
                         " | Data/Hora: " + java.time.LocalDateTime.now()
         );
+        if (funcionario.getEmail() == null || funcionario.getEmail().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reparador sem e-mail cadastrado.");
+        }
 
         try {
             integracaoService.enviarEmail(email);
