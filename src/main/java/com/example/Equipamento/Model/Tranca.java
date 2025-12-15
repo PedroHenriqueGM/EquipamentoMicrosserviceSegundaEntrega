@@ -35,6 +35,9 @@ public class Tranca {
     @Column(name = "ano")
     private String ano;
 
+    @Column(name = "reparador")
+    private String reparador;
+
     // === R4: vínculo 1:1 com Bicicleta (tranca ocupada por uma bicicleta) ===
     @OneToOne
     @JoinColumn(name = "bicicleta_id", unique = true)

@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
 import com.example.Equipamento.Model.Bicicleta;
@@ -24,13 +25,15 @@ public class TrancaService {
     private final BicicletaRepository bicicletaRepository;
     private final TotemRepository totemRepository;
     private EmailService emailService;
+    private final IntegracaoService integracaoService;
 
 
-    public TrancaService(TrancaRepository repository, BicicletaRepository bicicletaRepository, TotemRepository totemRepository, EmailService emailService) {
+    public TrancaService(TrancaRepository repository, BicicletaRepository bicicletaRepository, TotemRepository totemRepository, EmailService emailService, IntegracaoService integracaoService) {
         this.repository = repository;
         this.bicicletaRepository = bicicletaRepository;
         this.totemRepository = totemRepository;
         this.emailService = emailService;
+        this.integracaoService = integracaoService;
     }
 
     private static final String MSG_TRANCA_NAO_ENCONTRADA = "Tranca não encontrada";
@@ -194,7 +197,6 @@ public class TrancaService {
                 );
             }
         } else {
-            // ✅ comparação corrigida aqui
             if (idBicicleta != null && bike.getId() != idBicicleta.intValue()) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
@@ -232,7 +234,18 @@ public class TrancaService {
                         "Tranca não encontrada (id incorreto ou não cadastrada)."
                 ));
 
-        // 3. Validar status: deve ser "nova" ou "em_reparo"
+        // 3. Validar funcionário (reparador)
+        FuncionarioDTO funcionario;
+        try {
+            funcionario = integracaoService.buscarFuncionario(dto.getIdFuncionario());
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reparador informado não existe."
+            );
+        }
+
+        // 4. Validar status: deve ser "nova" ou "em_reparo"
         if (tranca.getStatus() != StatusTranca.NOVA &&
                 tranca.getStatus() != StatusTranca.EM_REPARO) {
             throw new ResponseStatusException(
@@ -241,18 +254,23 @@ public class TrancaService {
             );
         }
 
-        // 4. R3 – Em reparo, verificar se funcionario é o mesmo
-        // (Seu modelo ainda não contém esse campo — deixo como TODO)
+        // 5. R3 – Em reparo, verificar se funcionario é o mesmo
         if (tranca.getStatus() == StatusTranca.EM_REPARO) {
-            System.out.println("[AVISO] TODO: validar funcionario responsável (R3).");
-        }
 
-        // 5. Registrar inclusão (R1)
-        LocalDateTime agora = LocalDateTime.now();
-        System.out.printf(
-                "[INCLUSAO TRANCA] dataHora=%s, idFuncionario=%d, idTranca=%d, idTotem=%d%n",
-                agora, dto.getIdFuncionario(), dto.getIdTranca(), dto.getIdTotem()
-        );
+            if (tranca.getReparador() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Tranca em reparo não possui reparador associado."
+                );
+            }
+
+            if (!tranca.getReparador().equals(dto.getIdFuncionario())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "O reparador que está devolvendo a tranca não é o mesmo que retirou para reparo."
+                );
+            }
+        }
 
         // 6. Vincular tranca ao totem
         tranca.setTotem(totem);
@@ -268,29 +286,6 @@ public class TrancaService {
         repository.saveAndFlush(tranca);
         totemRepository.saveAndFlush(totem);
 
-        // 9. R2 – envio de e-mail
-        try {
-            String resultado = emailService.enviarEmail(
-                    dto.getIdFuncionario() + "@empresa.com",      // destino fictício
-                    "Inclusão de Tranca na Rede",
-                    "A tranca " + dto.getIdTranca() +
-                            " foi incluída no totem " + dto.getIdTotem() +
-                            " em " + agora +
-                            " pelo funcionário " + dto.getIdFuncionario()
-
-            );
-            System.out.println("Resultado do envio de email = " + resultado);
-
-            if (!resultado.equalsIgnoreCase("sucesso")) {
-                throw new RuntimeException("Falha no envio");
-            }
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "E2 – Não foi possível enviar o email."
-            );
-        }
     }
     @Transactional
     public void retirarTranca(RetirarTrancaDTO dto) {
@@ -339,41 +334,15 @@ public class TrancaService {
         // 6. Alterar status final
         if (statusDestino.equals("EM_REPARO")) {
             tranca.setStatus(StatusTranca.EM_REPARO);
+            tranca.setReparador(dto.getIdFuncionario());
         } else { // APOSENTADA
             tranca.setStatus(StatusTranca.APOSENTADA);
+            tranca.setReparador(null);
         }
-
-        // 7. Registrar retirada (R1)
-        LocalDateTime agora = LocalDateTime.now();
-        System.out.printf(
-                "[RETIRADA TRANCA] dataHora=%s, idFuncionario=%d, idTranca=%d, statusDestino=%s%n",
-                agora, dto.getIdFuncionario(), dto.getIdTranca(), statusDestino
-        );
 
         // 8. Persistir
         repository.saveAndFlush(tranca);
-
-        // 9. Enviar email (R2)
-        try {
-            emailService.enviarEmail(
-                    "reparador" + dto.getIdFuncionario() + "@empresa.com",
-                    "Retirada de Tranca",
-                    String.format(
-                            "A tranca %d foi retirada pelo funcionário %d às %s. Destino: %s.",
-                            dto.getIdTranca(),
-                            dto.getIdFuncionario(),
-                            agora.toString(),
-                            statusDestino
-                    )
-            );
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "E2 – Não foi possível enviar o email."
-            );
-        }
     }
-
 
     public Tranca alterarStatus(Integer idTranca, String acaoRaw) {
 
