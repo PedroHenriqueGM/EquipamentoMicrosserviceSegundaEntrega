@@ -4,7 +4,7 @@ public class RetirarBicicletaDTO {
 
     private Long idTranca;
     private Long idBicicleta;
-    private Long idFuncionario;
+    private String idFuncionario;
     // Valores esperados: "APOSENTADA" ou "EM_REPARO"
     private String statusAcaoReparador;
 
@@ -24,11 +24,11 @@ public class RetirarBicicletaDTO {
         this.idBicicleta = idBicicleta;
     }
 
-    public Long getIdFuncionario() {
+    public String getIdFuncionario() {
         return idFuncionario;
     }
 
-    public void setIdFuncionario(Long idFuncionario) {
+    public void setIdFuncionario(String idFuncionario) {
         this.idFuncionario = idFuncionario;
     }
 

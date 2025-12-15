@@ -213,14 +213,14 @@ public class BicicletaService {
     @Transactional
     public void retirarBicicleta(RetirarBicicletaDTO dto) {
 
-        // 1. Buscar tranca (E1 – número inválido)
+        // 1. Buscar tranca
         Tranca tranca = trancaRepository.findById(Math.toIntExact(dto.getIdTranca()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Número da tranca inválido."
                 ));
 
-        // 2. Garantir que há bicicleta presa na tranca (pré-condição)
+        // 2. Garantir bicicleta na tranca
         Bicicleta bicicleta = tranca.getBicicleta();
         if (bicicleta == null) {
             throw new ResponseStatusException(
@@ -229,7 +229,7 @@ public class BicicletaService {
             );
         }
 
-        // 3. (Opcional) Validar se o idBicicleta do corpo bate com a bicicleta presa
+        // 3. Validar bicicleta informada
         if (dto.getIdBicicleta() != null &&
                 !dto.getIdBicicleta().equals((long) bicicleta.getId())) {
             throw new ResponseStatusException(
@@ -238,7 +238,7 @@ public class BicicletaService {
             );
         }
 
-        // 4. Validar status atual da bicicleta
+        // 4. Validar status atual
         if (bicicleta.getStatus() != StatusBicicleta.REPARO_SOLICITADO) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -246,7 +246,7 @@ public class BicicletaService {
             );
         }
 
-        // 5. Validar destino (statusAcaoReparador do Swagger)
+        // 5. Validar destino
         String statusDestino = dto.getStatusAcaoReparador() != null
                 ? dto.getStatusAcaoReparador().toUpperCase()
                 : "";
@@ -258,63 +258,24 @@ public class BicicletaService {
             );
         }
 
-        // 6. Definir status final da bicicleta
+        // 6. Aplicar status final + reparador
         if (statusDestino.equals("EM_REPARO")) {
             bicicleta.setStatus(StatusBicicleta.EM_REPARO);
-        } else { // APOSENTADA
+            bicicleta.setReparador(dto.getIdFuncionario());
+        } else {
             bicicleta.setStatus(StatusBicicleta.APOSENTADA);
+            bicicleta.setReparador(null);
         }
 
-        // Remover vínculo
+        // 7. Liberar tranca
         tranca.setBicicleta(null);
         tranca.setStatus(StatusTranca.LIVRE);
 
-        // 7. Registrar retirada (log)
-        LocalDateTime agora = LocalDateTime.now();
-        System.out.printf(
-                "[RETIRADA BICICLETA] dataHora=%s, idFuncionario=%d, idBicicleta=%d, idTranca=%d, statusDestino=%s%n",
-                agora,
-                dto.getIdFuncionario(),
-                bicicleta.getId(),
-                tranca.getId(),
-                statusDestino
-        );
-
-        // 8. Persistir alterações
+        // 8. Persistir
         repository.saveAndFlush(bicicleta);
         trancaRepository.saveAndFlush(tranca);
-
-        // 9. Enviar email (R2) – tratamento de erro [E2]
-        try {
-            String assunto = "Retirada de Bicicleta da Rede";
-            String corpo = String.format(
-                    "A bicicleta %s (ID=%d) foi retirada da tranca %s (ID=%d) pelo funcionário %d às %s. Destino: %s.",
-                    bicicleta.getNumero(),
-                    bicicleta.getId(),
-                    tranca.getNumero(),
-                    tranca.getId(),
-                    dto.getIdFuncionario(),
-                    agora.toString(),
-                    statusDestino
-            );
-            String resultado = emailService.enviarEmail(
-                    "reparador" + dto.getIdFuncionario() + "@empresa.com",
-                    assunto,
-                    corpo
-            );
-            if (!"sucesso".equalsIgnoreCase(resultado)) {
-                throw new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "E2 – Não foi possível enviar o email."
-                );
-            }
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "E2 – Não foi possível enviar o email."
-            );
-        }
     }
+
 
 
     public Bicicleta alterarStatus(Integer idBicicleta, String acaoRaw) {

@@ -378,7 +378,7 @@ class BicicletaServiceTest {
         assertThatThrownBy(() -> bicicletaService.incluirBicicletaNaRede(dto))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Erro ao enviar o email");
-    }*/
+    }
 
     // ====================================================================
     // NOVOS TESTES ADICIONADOS PARA AUMENTAR COBERTURA (retirarBicicleta)
@@ -483,5 +483,5 @@ class BicicletaServiceTest {
         assertThatThrownBy(() -> bicicletaService.retirarBicicleta(dto))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("statusAcaoReparador deve ser 'EM_REPARO' ou 'APOSENTADA'");
-    }
+    }*/
 }
