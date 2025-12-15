@@ -277,7 +277,6 @@ public class BicicletaService {
     }
 
 
-
     public Bicicleta alterarStatus(Integer idBicicleta, String acaoRaw) {
         Bicicleta bicicleta = repository.findById(idBicicleta)
                 .orElseThrow(() -> new ResponseStatusException(

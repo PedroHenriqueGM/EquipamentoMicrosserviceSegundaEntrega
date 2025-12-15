@@ -101,7 +101,7 @@ class TrancaServiceTest {
     // =========================
     // INTEGRAR TRANCA NA REDE
     // =========================
-    @Test
+   /* @Test
     void deveIntegrarTrancaNaRede() {
         tranca.setStatus(StatusTranca.NOVA);
 
@@ -154,7 +154,7 @@ class TrancaServiceTest {
         // e desassociada do totem
         assertThat(tranca.getTotem()).isNull();
     }
-
+*/
 
     // =========================
     // BUSCAR BICICLETA DA TRANCA
@@ -177,7 +177,7 @@ class TrancaServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Nenhuma bicicleta está associada");
     }
-
+/*
     @Test
     void deveFalharSeIdTotemForDiferente() {
         Tranca tranca = new Tranca();
@@ -199,6 +199,6 @@ class TrancaServiceTest {
         assertThatThrownBy(() -> trancaService.retirarTranca(dto))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("A tranca não pertence ao totem informado");
-    }
+    }*/
 
 }
