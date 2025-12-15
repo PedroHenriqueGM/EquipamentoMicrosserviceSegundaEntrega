@@ -304,7 +304,7 @@ public class TrancaService {
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Não foi possível enviar o email ao reparador."
+                    "Não foi possível enviar o email ao reparador. Detalhe: " + e.getMessage()
             );
         }
 
