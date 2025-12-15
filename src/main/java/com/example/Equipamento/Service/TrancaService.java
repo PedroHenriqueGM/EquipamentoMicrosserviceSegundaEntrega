@@ -24,15 +24,13 @@ public class TrancaService {
     private final TrancaRepository repository;
     private final BicicletaRepository bicicletaRepository;
     private final TotemRepository totemRepository;
-    private EmailService emailService;
     private final IntegracaoService integracaoService;
 
 
-    public TrancaService(TrancaRepository repository, BicicletaRepository bicicletaRepository, TotemRepository totemRepository, EmailService emailService, IntegracaoService integracaoService) {
+    public TrancaService(TrancaRepository repository, BicicletaRepository bicicletaRepository, TotemRepository totemRepository, IntegracaoService integracaoService) {
         this.repository = repository;
         this.bicicletaRepository = bicicletaRepository;
         this.totemRepository = totemRepository;
-        this.emailService = emailService;
         this.integracaoService = integracaoService;
     }
 

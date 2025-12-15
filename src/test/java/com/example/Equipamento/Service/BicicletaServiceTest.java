@@ -39,8 +39,6 @@ class BicicletaServiceTest {
     @Mock
     private TotemRepository totemRepository;
 
-    @Mock
-    private EmailService emailService;
 
     @InjectMocks
     private BicicletaService bicicletaService;

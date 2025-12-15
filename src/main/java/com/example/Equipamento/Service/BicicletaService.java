@@ -27,14 +27,12 @@ public class BicicletaService {
     private final BicicletaRepository repository;
     private final TrancaRepository trancaRepository;
     private final TotemRepository totemRepository;
-    private final EmailService emailService;
     private final IntegracaoService integracaoService;
 
-    public BicicletaService(BicicletaRepository repository, TrancaRepository trancaRepository, TotemRepository totemRepository, EmailService emailService, IntegracaoService integracaoService) {
+    public BicicletaService(BicicletaRepository repository, TrancaRepository trancaRepository, TotemRepository totemRepository, IntegracaoService integracaoService) {
         this.repository = repository;
         this.trancaRepository = trancaRepository;
         this.totemRepository = totemRepository;
-        this.emailService = emailService;
         this.integracaoService = integracaoService;
     }
 
@@ -288,6 +286,42 @@ public class BicicletaService {
         // 8. Persistir
         repository.saveAndFlush(bicicleta);
         trancaRepository.saveAndFlush(tranca);
+
+        // 9. Buscar reparador (para obter e-mail)
+        FuncionarioDTO funcionario;
+        try {
+            funcionario = integracaoService.buscarFuncionario(dto.getIdReparador());
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reparador informado não existe."
+            );
+        }
+
+// 10. Montar e enviar e-mail (R2 / E2)
+        EmailDTO email = new EmailDTO();
+        email.setEmail(funcionario.getEmail());
+        email.setAssunto("Retirada de bicicleta da rede de totens");
+
+        String acao = statusDestino.equals("EM_REPARO") ? "retirada para reparo" : "retirada para aposentadoria";
+
+        email.setMensagem(
+                "A bicicleta foi " + acao +
+                        ". Bicicleta: " + bicicleta.getNumero() +
+                        " | Tranca: " + tranca.getNumero() +
+                        " | Status final: " + bicicleta.getStatus() +
+                        " | Data/Hora: " + java.time.LocalDateTime.now()
+        );
+
+        try {
+            integracaoService.enviarEmail(email);
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Não foi possível enviar o email ao reparador."
+            );
+        }
+        
     }
 
 
