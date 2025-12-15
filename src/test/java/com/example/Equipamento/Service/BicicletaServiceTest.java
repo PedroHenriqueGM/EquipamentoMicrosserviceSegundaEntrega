@@ -297,7 +297,7 @@ class BicicletaServiceTest {
         IncluirBicicletaDTO dto = new IncluirBicicletaDTO();
         dto.setIdBicicleta(1L);
         dto.setIdTranca(10L);
-        dto.setIdReparador(99L);
+        dto.setIdReparador("99L");
 
         Bicicleta bike = new Bicicleta();
         bike.setId(1);
