@@ -4,7 +4,7 @@ public class RetirarTrancaDTO {
 
     private Long idTotem;
     private Long idTranca;
-    private String idFuncionario;
+    private String idReparador;
     // "APOSENTADA" ou "EM_REPARO"
     private String statusAcaoReparador;
 
@@ -24,12 +24,12 @@ public class RetirarTrancaDTO {
         this.idTranca = idTranca;
     }
 
-    public String getIdFuncionario() {
-        return idFuncionario;
+    public String getIdReparador() {
+        return idReparador;
     }
 
-    public void setIdFuncionario(String idFuncionario) {
-        this.idFuncionario = idFuncionario;
+    public void setIdReparador(String idReparador) {
+        this.idReparador = idReparador;
     }
 
     public String getStatusAcaoReparador() {

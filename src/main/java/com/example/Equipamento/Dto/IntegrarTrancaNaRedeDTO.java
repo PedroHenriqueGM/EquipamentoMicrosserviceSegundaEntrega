@@ -26,7 +26,7 @@ public class IntegrarTrancaNaRedeDTO {
         return idReparador;
     }
 
-    public void setIdReparador(String idFuncionario) {
-        this.idReparador = idFuncionario;
+    public void setIdReparador(String idReparador) {
+        this.idReparador = idReparador;
     }
 }

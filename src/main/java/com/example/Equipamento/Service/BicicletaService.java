@@ -261,7 +261,7 @@ public class BicicletaService {
         // 6. Aplicar status final + reparador
         if (statusDestino.equals("EM_REPARO")) {
             bicicleta.setStatus(StatusBicicleta.EM_REPARO);
-            bicicleta.setReparador(dto.getIdFuncionario());
+            bicicleta.setReparador(dto.getIdReparador());
         } else {
             bicicleta.setStatus(StatusBicicleta.APOSENTADA);
             bicicleta.setReparador(null);

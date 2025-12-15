@@ -334,7 +334,7 @@ public class TrancaService {
         // 6. Alterar status final
         if (statusDestino.equals("EM_REPARO")) {
             tranca.setStatus(StatusTranca.EM_REPARO);
-            tranca.setReparador(dto.getIdFuncionario());
+            tranca.setReparador(dto.getIdReparador());
         } else { // APOSENTADA
             tranca.setStatus(StatusTranca.APOSENTADA);
             tranca.setReparador(null);
