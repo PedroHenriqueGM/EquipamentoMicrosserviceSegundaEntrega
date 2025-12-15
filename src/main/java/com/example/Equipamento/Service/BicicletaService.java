@@ -208,42 +208,6 @@ public class BicicletaService {
         repository.saveAndFlush(bicicleta);
         trancaRepository.saveAndFlush(tranca);
 
-        // 8. Log
-        LocalDateTime agora = LocalDateTime.now();
-        System.out.printf(
-                "[INCLUSAO BICICLETA] dataHora=%s, reparador=%s, idBicicleta=%d, idTranca=%d%n",
-                agora,
-                dto.getIdReparador(),
-                bicicleta.getId(),
-                tranca.getId()
-        );
-
-        // 9. Enviar email
-        try {
-            String assunto = "Inclusão de Bicicleta na Rede";
-            String corpo = String.format(
-                    "A bicicleta %s foi incluída na tranca %d em %s.",
-                    bicicleta.getNumero(),
-                    tranca.getId(),
-                    agora
-            );
-
-            String resultado = emailService.enviarEmail(
-                    funcionario.getEmail(),
-                    assunto,
-                    corpo
-            );
-
-            if (!"sucesso".equalsIgnoreCase(resultado)) {
-                throw new RuntimeException();
-            }
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Erro ao enviar o email."
-            );
-        }
     }
 
     @Transactional
