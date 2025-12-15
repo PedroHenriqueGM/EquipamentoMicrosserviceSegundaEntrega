@@ -3,7 +3,7 @@ package com.example.Equipamento.Dto;
 public class IncluirBicicletaDTO {
     private Long idBicicleta;
     private Long idTranca;
-    private Long idReparador; 
+    private String idReparador;
 
     public Long getIdBicicleta() {
         return idBicicleta;
@@ -21,11 +21,11 @@ public class IncluirBicicletaDTO {
         this.idTranca = idTranca;
     }
 
-    public Long getIdReparador() {
+    public String getIdReparador() {
         return idReparador;
     }
 
-    public void setIdReparador(Long idReparador) {
+    public void setIdReparador(String idReparador) {
         this.idReparador = idReparador;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IncluirBicicletaDTO;
 import com.example.Equipamento.Dto.RetirarBicicletaDTO;
 import com.example.Equipamento.Model.Bicicleta;
@@ -26,12 +27,14 @@ public class BicicletaService {
     private final TrancaRepository trancaRepository;
     private final TotemRepository totemRepository;
     private final EmailService emailService;
+    private final IntegracaoService integracaoService;
 
-    public BicicletaService(BicicletaRepository repository, TrancaRepository trancaRepository, TotemRepository totemRepository, EmailService emailService) {
+    public BicicletaService(BicicletaRepository repository, TrancaRepository trancaRepository, TotemRepository totemRepository, EmailService emailService, IntegracaoService integracaoService) {
         this.repository = repository;
         this.trancaRepository = trancaRepository;
         this.totemRepository = totemRepository;
         this.emailService = emailService;
+        this.integracaoService = integracaoService;
     }
 
     private static final String MSG_BICICLETA_NAO_ENCONTRADA = "Bicicleta não encontrada";
@@ -143,6 +146,18 @@ public class BicicletaService {
                         "Bicicleta não encontrada."
                 ));
 
+        //Validar funcionario
+        FuncionarioDTO funcionario;
+        try {
+            funcionario = integracaoService.buscarFuncionario(dto.getIdReparador());
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reparador informado não existe."
+            );
+        }
+
+
         // 2. Validar status — deve ser nova ou em_reparo
         StatusBicicleta status = bicicleta.getStatus();
         if (status != StatusBicicleta.NOVA && status != StatusBicicleta.EM_REPARO) {
@@ -150,9 +165,22 @@ public class BicicletaService {
                     "Bicicleta deve estar com status NOVA ou EM_REPARO.");
         }
 
-        // 3. TODO: validar reparador no caso EM_REPARO
+        // 3. Validar reparador no caso EM_REPARO
         if (status == StatusBicicleta.EM_REPARO) {
-            System.out.println("[AVISO] TODO: validar reparador responsável (R3).");
+
+                if (bicicleta.getReparador() == null) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Bicicleta em reparo não possui reparador associado."
+                    );
+                }
+
+                if (!bicicleta.getReparador().equals(dto.getIdReparador())) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "O reparador que está devolvendo a bicicleta não é o mesmo que retirou para reparo."
+                    );
+                }
         }
 
         // 4. Buscar tranca
