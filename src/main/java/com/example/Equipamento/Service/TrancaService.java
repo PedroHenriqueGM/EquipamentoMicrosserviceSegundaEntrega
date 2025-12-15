@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.EmailDTO;
 import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
@@ -284,6 +285,27 @@ public class TrancaService {
         repository.saveAndFlush(tranca);
         totemRepository.saveAndFlush(totem);
 
+        // 9. Montar e enviar e-mail ao reparador
+        EmailDTO email = new EmailDTO();
+        email.setEmail(funcionario.getEmail());
+        email.setAssunto("Inclusão de tranca na rede de totens");
+        email.setMensagem(
+                "Tranca: " + tranca.getNumero() +
+                        " | Totem: " + totem.getId() +
+                        " | Status final: " + tranca.getStatus() +
+                        " | Data/Hora: " + java.time.LocalDateTime.now()
+        );
+
+        try {
+            integracaoService.enviarEmail(email);
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Não foi possível enviar o email ao reparador."
+            );
+        }
+
+
     }
     @Transactional
     public void retirarTranca(RetirarTrancaDTO dto) {
@@ -340,6 +362,42 @@ public class TrancaService {
 
         // 8. Persistir
         repository.saveAndFlush(tranca);
+
+        // 9. Buscar reparador (para obter e-mail)
+        FuncionarioDTO funcionario;
+        try {
+            funcionario = integracaoService.buscarFuncionario(dto.getIdReparador());
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reparador informado não existe."
+            );
+        }
+
+        // 10. Montar e enviar e-mail ao reparador
+        EmailDTO email = new EmailDTO();
+        email.setEmail(funcionario.getEmail());
+        email.setAssunto("Retirada de tranca da rede de totens");
+
+        String acao = statusDestino.equals("EM_REPARO") ? "retirada para reparo" : "retirada para aposentadoria";
+
+        email.setMensagem(
+                "A tranca foi " + acao +
+                        ". Tranca: " + tranca.getNumero() +
+                        (dto.getIdTotem() != null ? " | Totem: " + dto.getIdTotem() : "") +
+                        " | Status final: " + tranca.getStatus() +
+                        " | Data/Hora: " + java.time.LocalDateTime.now()
+        );
+
+        try {
+            integracaoService.enviarEmail(email);
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Não foi possível enviar o email ao reparador."
+            );
+        }
+
     }
 
     public Tranca alterarStatus(Integer idTranca, String acaoRaw) {
