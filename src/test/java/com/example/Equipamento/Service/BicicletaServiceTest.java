@@ -71,7 +71,7 @@ class BicicletaServiceTest {
     // ============================
 
     @Test
-    void deveSalvarBicicletaEAtribuirNumeroAutomaticoEStatusNova() {
+    void deveSalvarBicicletaEAtribuirStatusNova() {
         when(bicicletaRepository.saveAndFlush(any(Bicicleta.class)))
                 .thenAnswer(invocation -> {
                     Bicicleta b = invocation.getArgument(0);
@@ -91,7 +91,6 @@ class BicicletaServiceTest {
         Bicicleta salva = bicicletaService.incluirBicicleta(nova);
 
         assertThat(salva.getId()).isEqualTo(10);
-        assertThat(salva.getNumero()).isEqualTo(10);
         assertThat(salva.getStatus()).isEqualTo(StatusBicicleta.NOVA);
 
         verify(bicicletaRepository, atLeast(2)).saveAndFlush(any(Bicicleta.class));

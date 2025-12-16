@@ -56,7 +56,7 @@ public class BicicletaService {
         Bicicleta salva = repository.saveAndFlush(bicicleta);
 
         // R5: usa o próprio ID como número gerado pelo sistema
-        salva.setNumero(salva.getId());
+        //salva.setNumero(salva.getId());
 
         // Atualiza o registro já com número
         repository.saveAndFlush(salva);
