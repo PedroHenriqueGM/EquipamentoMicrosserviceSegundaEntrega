@@ -113,7 +113,7 @@ class TrancaControllerTest {
         tranca.setId(1);
         tranca.setNumero("T-001");
         tranca.setLocalizacao("Centro"); // se existir @NotBlank
-        tranca.setStatus(StatusTranca.LIVRE); // se existir @NotNull
+        tranca.setStatus(StatusTranca.DISPONIVEL); // se existir @NotNull
 
         when(trancaService.salvarTranca(any(Tranca.class))).thenReturn(tranca);
 

@@ -2,7 +2,7 @@ package com.example.Equipamento.Model.enums;
 
 public enum StatusTranca {
     NOVA,
-    LIVRE,
+    DISPONIVEL,
     OCUPADA,
     EM_REPARO,
     APOSENTADA,

@@ -304,7 +304,7 @@ class BicicletaServiceTest {
         Tranca tranca = new Tranca();
         tranca.setId(10);
         tranca.setNumero("T-10");
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         FuncionarioDTO funcionario = new FuncionarioDTO();
         funcionario.setEmail("teste@gmail.com");
@@ -339,7 +339,7 @@ class BicicletaServiceTest {
         Tranca tranca = new Tranca();
         tranca.setId(10);
         tranca.setNumero("T-10");
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         FuncionarioDTO funcionario = new FuncionarioDTO();
         funcionario.setEmail("teste@gmail.com");

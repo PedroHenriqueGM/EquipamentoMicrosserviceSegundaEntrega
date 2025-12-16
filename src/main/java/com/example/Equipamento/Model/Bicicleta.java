@@ -37,4 +37,7 @@ public class Bicicleta {
 
     @Column(name = "reparador")
     private String reparador;
+
+    public Bicicleta(int bicicletaId) {
+    }
 }

@@ -53,7 +53,7 @@ class TrancaServiceTest {
         tranca = new Tranca();
         tranca.setId(1);
         tranca.setNumero("TR-1");
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         bicicleta = new Bicicleta();
         bicicleta.setId(10);
@@ -94,7 +94,7 @@ class TrancaServiceTest {
 
         Tranca result = trancaService.destrancar(1, 10);
 
-        assertThat(result.getStatus()).isEqualTo(StatusTranca.LIVRE);
+        assertThat(result.getStatus()).isEqualTo(StatusTranca.DISPONIVEL);
         assertThat(result.getBicicleta()).isNull();
 
         verify(trancaRepository).saveAndFlush(tranca);
@@ -123,7 +123,7 @@ class TrancaServiceTest {
 
         trancaService.incluirTrancaNaRede(dto);
 
-        assertThat(tranca.getStatus()).isEqualTo(StatusTranca.LIVRE);
+        assertThat(tranca.getStatus()).isEqualTo(StatusTranca.DISPONIVEL);
         assertThat(tranca.getTotem()).isEqualTo(totem);
 
         verify(trancaRepository).saveAndFlush(tranca);
@@ -251,7 +251,7 @@ class TrancaServiceTest {
 
     @Test
     void deveFalharAoDestrancarQuandoNaoEstaOcupada() {
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
 
@@ -320,7 +320,7 @@ class TrancaServiceTest {
 
     @Test
     void deveDeletarTranca() {
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
         when(trancaRepository.saveAndFlush(any(Tranca.class))).thenReturn(tranca);
@@ -341,7 +341,7 @@ class TrancaServiceTest {
 
     @Test
     void deveFalharAoTrancarBicicletaJaAssociada() {
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
         when(bicicletaRepository.findById(10)).thenReturn(Optional.of(bicicleta));
@@ -375,7 +375,7 @@ class TrancaServiceTest {
 
     @Test
     void deveFalharAoAlterarStatusParaTransicaoInvalida() {
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
 
         assertThatThrownBy(() -> trancaService.alterarStatus(1, "INVALIDO"))

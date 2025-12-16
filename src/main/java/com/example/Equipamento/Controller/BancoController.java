@@ -1,7 +1,6 @@
 package com.example.Equipamento.Controller;
 
 import com.example.Equipamento.Service.BancoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,14 +8,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class BancoController {
 
-    // Injeção do serviço que realiza a limpeza do banco
-    @Autowired
-    private BancoService bancoService;
+    private final BancoService bancoService;
 
-    // Endpoint que chama o serviço para restaurar o banco
+    public BancoController(BancoService bancoService) {
+        this.bancoService = bancoService;
+    }
+
     @GetMapping("/restaurarBanco")
-    public ResponseEntity<String> restaurarBanco() {
+    public ResponseEntity<Void> restaurarBanco() {
         bancoService.restaurarBanco();
-        return ResponseEntity.ok("Banco restaurado com sucesso.");
+        return ResponseEntity.ok().build();
     }
 }

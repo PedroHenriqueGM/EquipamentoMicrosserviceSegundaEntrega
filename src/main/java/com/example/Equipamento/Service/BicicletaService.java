@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects; 
 import java.util.stream.Collectors; 
@@ -192,7 +191,7 @@ public class BicicletaService {
                 ));
 
         // 6. Tranca deve estar LIVRE
-        if (tranca.getStatus() != StatusTranca.LIVRE) {
+        if (tranca.getStatus() != StatusTranca.DISPONIVEL) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A tranca deve estar LIVRE para receber bicicleta."
@@ -281,7 +280,7 @@ public class BicicletaService {
 
         // 7. Liberar tranca
         tranca.setBicicleta(null);
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
 
         // 8. Persistir
         repository.saveAndFlush(bicicleta);

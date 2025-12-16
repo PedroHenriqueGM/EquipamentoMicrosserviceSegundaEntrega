@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -128,7 +127,7 @@ public class TrancaService {
                 ));
 
         // Só pode TRANCAR se estiver LIVRE
-        if (tranca.getStatus() != StatusTranca.LIVRE) {
+        if (tranca.getStatus() != StatusTranca.DISPONIVEL) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A tranca só pode ser TRANCADA quando está LIVRE."
@@ -210,7 +209,7 @@ public class TrancaService {
             tranca.setBicicleta(null);
         }
 
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
         repository.saveAndFlush(tranca);
 
         return tranca;
@@ -257,7 +256,7 @@ public class TrancaService {
         }
 
         tranca.setTotem(totem);
-        tranca.setStatus(StatusTranca.LIVRE);
+        tranca.setStatus(StatusTranca.DISPONIVEL);
         repository.saveAndFlush(tranca);
         totemRepository.saveAndFlush(totem);
 
@@ -394,10 +393,10 @@ public class TrancaService {
         switch (acao) {
 
             case "TRANCAR":
-                if (tranca.getStatus() != StatusTranca.LIVRE) {
+                if (tranca.getStatus() != StatusTranca.DISPONIVEL) {
                     throw new ResponseStatusException(
                             HttpStatus.UNPROCESSABLE_ENTITY,
-                            "Só é possível TRANCAR quando a tranca está LIVRE.");
+                            "Só é possível TRANCAR quando a tranca está DISPONIVEL.");
                 }
                 tranca.setStatus(StatusTranca.OCUPADA);
                 break;
@@ -408,7 +407,7 @@ public class TrancaService {
                             HttpStatus.UNPROCESSABLE_ENTITY,
                             "Só é possível DESTRANCAR quando a tranca está OCUPADA.");
                 }
-                tranca.setStatus(StatusTranca.LIVRE);
+                tranca.setStatus(StatusTranca.DISPONIVEL);
                 break;
 
             case "REPARO_SOLICITADO":
