@@ -258,8 +258,6 @@ public class TrancaService {
 
         tranca.setTotem(totem);
         tranca.setStatus(StatusTranca.LIVRE);
-        //envio de email comentado pois da erro nessa função em específico e interrompe o fluxo de comandos para testes
-        /*
         repository.saveAndFlush(tranca);
         totemRepository.saveAndFlush(totem);
 
@@ -281,7 +279,7 @@ public class TrancaService {
         );
 
 
-        integracaoService.enviarEmail(email);*/
+        integracaoService.enviarEmail(email);
     }
 
 
