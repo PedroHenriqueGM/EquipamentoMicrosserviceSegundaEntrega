@@ -39,6 +39,7 @@ public class BancoService {
         // Totem
         Totem totem = new Totem();
         totem.setLocalizacao("Rio de Janeiro");
+        totem.setDescricao("Totem Central");
         Totem savedTotem = totemRepository.save(totem); // ID gerado automaticamente
 
         // Bicicletas
