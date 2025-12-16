@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IncluirBicicletaDTO;
 import com.example.Equipamento.Dto.RetirarBicicletaDTO;
 import com.example.Equipamento.Model.Bicicleta;
@@ -38,6 +39,9 @@ class BicicletaServiceTest {
 
     @Mock
     private TotemRepository totemRepository;
+
+    @Mock
+    private IntegracaoService integracaoService;
 
 
     @InjectMocks
@@ -285,13 +289,8 @@ class BicicletaServiceTest {
         assertThat(ex.getReason()).contains("Status inválido");
     }
 
-    // ====================================================================
-    // NOVOS TESTES ADICIONADOS PARA AUMENTAR COBERTURA (incluirBicicletaNaRede)
-    // ====================================================================
-/*
     @Test
     void deveIncluirBicicletaNaRedeComSucesso() {
-        // Arrange
         IncluirBicicletaDTO dto = new IncluirBicicletaDTO();
         dto.setIdBicicleta(1L);
         dto.setIdTranca(10L);
@@ -300,61 +299,29 @@ class BicicletaServiceTest {
         Bicicleta bike = new Bicicleta();
         bike.setId(1);
         bike.setNumero("BIC-1");
-        bike.setStatus(StatusBicicleta.NOVA); // Status aceito
+        bike.setStatus(StatusBicicleta.NOVA);
 
         Tranca tranca = new Tranca();
         tranca.setId(10);
-        tranca.setStatus(StatusTranca.LIVRE); // Tranca livre
+        tranca.setNumero("T-10");
+        tranca.setStatus(StatusTranca.LIVRE);
+
+        FuncionarioDTO funcionario = new FuncionarioDTO();
+        funcionario.setEmail("teste@gmail.com");
 
         when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bike));
         when(trancaRepository.findById(10)).thenReturn(Optional.of(tranca));
-        when(emailService.enviarEmail(anyString(), anyString(), anyString())).thenReturn("sucesso");
+        when(integracaoService.buscarFuncionario("99L")).thenReturn(funcionario);
+        doNothing().when(integracaoService).enviarEmail(any());
 
-        // Act
         bicicletaService.incluirBicicletaNaRede(dto);
 
-        // Assert
         assertThat(bike.getStatus()).isEqualTo(StatusBicicleta.DISPONIVEL);
         assertThat(tranca.getBicicleta()).isEqualTo(bike);
 
         verify(bicicletaRepository).saveAndFlush(bike);
         verify(trancaRepository).saveAndFlush(tranca);
-        verify(emailService).enviarEmail(contains("reparador99"), anyString(), anyString());
-    }
-
-    @Test
-    void naoDeveIncluirBicicletaNaRedeSeStatusInvalido() {
-        IncluirBicicletaDTO dto = new IncluirBicicletaDTO();
-        dto.setIdBicicleta(1L);
-
-        Bicicleta bike = new Bicicleta();
-        bike.setStatus(StatusBicicleta.EM_USO); // Status inválido para inclusão
-
-        when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bike));
-
-        assertThatThrownBy(() -> bicicletaService.incluirBicicletaNaRede(dto))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Bicicleta deve estar com status NOVA ou EM_REPARO");
-    }
-
-    @Test
-    void naoDeveIncluirBicicletaNaRedeSeTrancaOcupada() {
-        IncluirBicicletaDTO dto = new IncluirBicicletaDTO();
-        dto.setIdBicicleta(1L);
-        dto.setIdTranca(10L);
-
-        Bicicleta bike = new Bicicleta();
-        bike.setStatus(StatusBicicleta.NOVA);
-
-        Tranca tranca = new Tranca();
-        tranca.setStatus(StatusTranca.OCUPADA); // Tranca ocupada
-
-        when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bike));
-        when(trancaRepository.findById(10)).thenReturn(Optional.of(tranca));
-
-        assertThatThrownBy(() -> bicicletaService.incluirBicicletaNaRede(dto))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("A tranca deve estar LIVRE");
+        verify(integracaoService).enviarEmail(any());
     }
 
     @Test
@@ -362,55 +329,33 @@ class BicicletaServiceTest {
         IncluirBicicletaDTO dto = new IncluirBicicletaDTO();
         dto.setIdBicicleta(1L);
         dto.setIdTranca(10L);
-
-        Bicicleta bike = new Bicicleta();
-        bike.setStatus(StatusBicicleta.NOVA);
-        Tranca tranca = new Tranca();
-        tranca.setStatus(StatusTranca.LIVRE);
-
-        when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bike));
-        when(trancaRepository.findById(10)).thenReturn(Optional.of(tranca));
-        // Simula erro no envio do email
-        when(emailService.enviarEmail(anyString(), anyString(), anyString())).thenReturn("erro");
-
-        assertThatThrownBy(() -> bicicletaService.incluirBicicletaNaRede(dto))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Erro ao enviar o email");
-    }
-
-    // ====================================================================
-    // NOVOS TESTES ADICIONADOS PARA AUMENTAR COBERTURA (retirarBicicleta)
-    // ====================================================================
-
-    @Test
-    void deveRetirarBicicletaParaReparoComSucesso() {
-        RetirarBicicletaDTO dto = new RetirarBicicletaDTO();
-        dto.setIdTranca(10L);
-        dto.setIdBicicleta(1L);
-        dto.setIdFuncionario(88L);
-        dto.setStatusAcaoReparador("EM_REPARO");
+        dto.setIdReparador("99L");
 
         Bicicleta bike = new Bicicleta();
         bike.setId(1);
-        bike.setStatus(StatusBicicleta.REPARO_SOLICITADO);
+        bike.setNumero("BIC-1");
+        bike.setStatus(StatusBicicleta.NOVA);
 
         Tranca tranca = new Tranca();
         tranca.setId(10);
         tranca.setNumero("T-10");
-        tranca.setBicicleta(bike); // Tranca contém a bicicleta
+        tranca.setStatus(StatusTranca.LIVRE);
 
+        FuncionarioDTO funcionario = new FuncionarioDTO();
+        funcionario.setEmail("teste@gmail.com");
+
+        when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bike));
         when(trancaRepository.findById(10)).thenReturn(Optional.of(tranca));
-        when(emailService.enviarEmail(anyString(), anyString(), anyString())).thenReturn("sucesso");
+        when(integracaoService.buscarFuncionario("99L")).thenReturn(funcionario);
+        doThrow(new RuntimeException("Falha externa"))
+                .when(integracaoService).enviarEmail(any());
 
-        bicicletaService.retirarBicicleta(dto);
-
-        assertThat(tranca.getBicicleta()).isNull();
-        assertThat(tranca.getStatus()).isEqualTo(StatusTranca.LIVRE);
-        assertThat(bike.getStatus()).isEqualTo(StatusBicicleta.EM_REPARO);
-
-        verify(trancaRepository).saveAndFlush(tranca);
-        verify(bicicletaRepository).saveAndFlush(bike);
+        assertThatThrownBy(() -> bicicletaService.incluirBicicletaNaRede(dto))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Não foi possível enviar o email");
     }
+
+
 
     @Test
     void deveLancarErroSeTrancaVaziaNaRetirada() {
@@ -481,5 +426,5 @@ class BicicletaServiceTest {
         assertThatThrownBy(() -> bicicletaService.retirarBicicleta(dto))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("statusAcaoReparador deve ser 'EM_REPARO' ou 'APOSENTADA'");
-    }*/
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
 import com.example.Equipamento.Model.Bicicleta;
@@ -38,6 +39,10 @@ class TrancaServiceTest {
     @InjectMocks
     private TrancaService trancaService;
 
+    @Mock
+    private IntegracaoService integracaoService;
+
+
     private Tranca tranca;
     private Bicicleta bicicleta;
     private Totem totem;
@@ -55,7 +60,7 @@ class TrancaServiceTest {
         bicicleta.setStatus(StatusBicicleta.NOVA);
 
         totem = new Totem();
-        // não precisamos setar o id aqui (Hibernate faria isso)
+        totem.setId(1L);
     }
 
     // =========================
@@ -98,18 +103,22 @@ class TrancaServiceTest {
     // =========================
     // INTEGRAR TRANCA NA REDE
     // =========================
-   /* @Test
-    void deveIntegrarTrancaNaRede() {
+    @Test
+    void deveIntegrarTrancaNovaNaRede() {
         tranca.setStatus(StatusTranca.NOVA);
 
         IntegrarTrancaNaRedeDTO dto = new IntegrarTrancaNaRedeDTO();
         dto.setIdTotem(1L);
         dto.setIdTranca(1);
-        dto.setIdFuncionario(99L);
+        dto.setIdReparador("99");
+
+        FuncionarioDTO funcionario = new FuncionarioDTO();
+        funcionario.setEmail("reparador@email.com");
 
         when(totemRepository.findById(1L)).thenReturn(Optional.of(totem));
         when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
-        when(emailService.enviarEmail(any(), any(), any())).thenReturn("sucesso");
+        when(integracaoService.buscarFuncionario("99")).thenReturn(funcionario);
+        doNothing().when(integracaoService).enviarEmail(any());
 
         trancaService.incluirTrancaNaRede(dto);
 
@@ -118,40 +127,40 @@ class TrancaServiceTest {
 
         verify(trancaRepository).saveAndFlush(tranca);
         verify(totemRepository).saveAndFlush(totem);
+        verify(integracaoService).enviarEmail(any());
     }
+
 
     // =========================
     // RETIRAR TRANCA PARA REPARO
     // =========================
     @Test
     void deveRetirarTrancaParaReparo() {
-        // Tranca em REPARO_SOLICITADO associada a um totem qualquer
-        Tranca tranca = new Tranca();
-        tranca.setId(1);
         tranca.setStatus(StatusTranca.REPARO_SOLICITADO);
+        tranca.setTotem(totem);
 
-        Totem totem = new Totem();
-        tranca.setTotem(totem); // não precisamos de id aqui
-
-        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
-        when(emailService.enviarEmail(anyString(), anyString(), anyString()))
-                .thenReturn("sucesso");
-
-        // DTO sem idTotem → não entra no if (dto.getIdTotem() != null)
         RetirarTrancaDTO dto = new RetirarTrancaDTO();
         dto.setIdTranca(1L);
-        // dto.setIdTotem(null); // opcional, já fica null por padrão
-        dto.setIdFuncionario(99L);
+        dto.setIdTotem(1L);
+        dto.setIdReparador("88");
         dto.setStatusAcaoReparador("EM_REPARO");
+
+        FuncionarioDTO funcionario = new FuncionarioDTO();
+        funcionario.setEmail("rep@email.com");
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+        when(integracaoService.buscarFuncionario("88")).thenReturn(funcionario);
+        doNothing().when(integracaoService).enviarEmail(any());
 
         trancaService.retirarTranca(dto);
 
-        // Verifica que a tranca foi marcada para EM_REPARO
         assertThat(tranca.getStatus()).isEqualTo(StatusTranca.EM_REPARO);
-        // e desassociada do totem
         assertThat(tranca.getTotem()).isNull();
+        assertThat(tranca.getReparador()).isEqualTo("88");
+
+        verify(trancaRepository).saveAndFlush(tranca);
     }
-*/
+
 
     // =========================
     // BUSCAR BICICLETA DA TRANCA
@@ -174,7 +183,7 @@ class TrancaServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Nenhuma bicicleta está associada");
     }
-/*
+
     @Test
     void deveFalharSeIdTotemForDiferente() {
         Tranca tranca = new Tranca();
@@ -190,12 +199,12 @@ class TrancaServiceTest {
         RetirarTrancaDTO dto = new RetirarTrancaDTO();
         dto.setIdTranca(1L);
         dto.setIdTotem(2L); // diferente de 1 → deve falhar
-        dto.setIdFuncionario(99L);
+        dto.setIdReparador("99L");
         dto.setStatusAcaoReparador("EM_REPARO");
 
         assertThatThrownBy(() -> trancaService.retirarTranca(dto))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("A tranca não pertence ao totem informado");
-    }*/
+    }
 
 }
