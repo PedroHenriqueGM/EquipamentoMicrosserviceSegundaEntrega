@@ -1,5 +1,6 @@
 package com.example.Equipamento.Service;
 
+import com.example.Equipamento.Dto.EmailDTO;
 import com.example.Equipamento.Dto.FuncionarioDTO;
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
@@ -349,6 +350,88 @@ class TrancaServiceTest {
         assertThatThrownBy(() -> trancaService.trancar(1, 10))
                 .isInstanceOf(ResponseStatusException.class);
     }
+
+    @Test
+    void deveFalharAoSalvarTrancaComCamposObrigatoriosNaoPreenchidos() {
+        Tranca trancaInvalida = new Tranca();
+        trancaInvalida.setModelo(null);  // Modelo é obrigatório
+        trancaInvalida.setAno(null);     // Ano é obrigatório
+
+        assertThatThrownBy(() -> trancaService.salvarTranca(trancaInvalida))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("R2: Modelo e ano são obrigatórios para cadastrar uma tranca.");
+    }
+
+    @Test
+    void deveFalharAoDeletarTrancaComBicicletaAssociada() {
+        tranca.setBicicleta(bicicleta); // Associando uma bicicleta
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+
+        assertThatThrownBy(() -> trancaService.deletarTranca(1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("R4: tranca com bicicleta associada não pode ser excluída.");
+    }
+
+    @Test
+    void deveFalharAoAlterarStatusParaTransicaoInvalida() {
+        tranca.setStatus(StatusTranca.LIVRE);
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+
+        assertThatThrownBy(() -> trancaService.alterarStatus(1, "INVALIDO"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Ação inválida");
+    }
+
+
+    @Test
+    void deveFalharAoIntegrarTrancaNaRedeQuandoEnvioDeEmailFalha() {
+
+        // Arrange
+        IntegrarTrancaNaRedeDTO dto = new IntegrarTrancaNaRedeDTO();
+        dto.setIdTotem(1L);
+        dto.setIdTranca(1);
+        dto.setIdReparador("10");
+
+        Totem totem = new Totem();
+        totem.setId(1L);
+
+        Tranca tranca = new Tranca();
+        tranca.setId(1);
+        tranca.setStatus(StatusTranca.NOVA);
+        tranca.setNumero("TR-1");
+
+        FuncionarioDTO funcionario = new FuncionarioDTO();
+        funcionario.setEmail("reparador@email.com");
+
+        when(totemRepository.findById(1L))
+                .thenReturn(Optional.of(totem));
+
+        when(trancaRepository.findById(1))
+                .thenReturn(Optional.of(tranca));
+
+        when(integracaoService.buscarFuncionario("10"))
+                .thenReturn(funcionario);
+
+        doThrow(new RuntimeException("erro mailgun"))
+                .when(integracaoService)
+                .enviarEmail(any(EmailDTO.class));
+
+        // Act + Assert
+        assertThatThrownBy(() -> trancaService.incluirTrancaNaRede(dto))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("erro mailgun");
+
+        // Verificações importantes para cobertura
+        verify(integracaoService).buscarFuncionario("10");
+        verify(integracaoService).enviarEmail(any(EmailDTO.class));
+        verify(trancaRepository).saveAndFlush(tranca);
+        verify(totemRepository).saveAndFlush(totem);
+    }
+
+
+
+
 
 
 
