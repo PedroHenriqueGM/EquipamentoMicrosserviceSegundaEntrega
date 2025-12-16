@@ -20,7 +20,7 @@ public class Tranca {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "numero", unique = true)
+    @Column(name = "numero")
     @NotNull(message = "O número da tranca é obrigatório.")
     private int numero;
 

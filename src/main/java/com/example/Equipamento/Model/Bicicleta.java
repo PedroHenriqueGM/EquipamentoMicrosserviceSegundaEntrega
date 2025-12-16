@@ -17,7 +17,7 @@ public class Bicicleta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "numero", unique = true)
+    @Column(name = "numero")
     private int numero;
 
     @Enumerated(EnumType.STRING)
