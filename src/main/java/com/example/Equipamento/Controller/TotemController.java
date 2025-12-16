@@ -52,7 +52,7 @@ public class TotemController {
         return ResponseEntity.ok(atualizado);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{idTotem}")
     public ResponseEntity<String> excluirTotem(@PathVariable Long id) {
         totemService.excluirTotem(id);
         return ResponseEntity.ok("Totem excluído com sucesso.");
