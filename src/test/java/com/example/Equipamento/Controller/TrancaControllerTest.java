@@ -2,7 +2,6 @@ package com.example.Equipamento.Controller;
 
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
-import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Tranca;
 import com.example.Equipamento.Service.TrancaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
