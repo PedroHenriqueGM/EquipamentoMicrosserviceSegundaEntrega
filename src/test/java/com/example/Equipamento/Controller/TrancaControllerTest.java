@@ -111,7 +111,7 @@ class TrancaControllerTest {
     void deveSalvarTranca() throws Exception {
         Tranca tranca = new Tranca();
         tranca.setId(1);
-        tranca.setNumero("T-001");      
+        tranca.setNumero("T-001");
         tranca.setLocalizacao("Centro"); // se existir @NotBlank
         tranca.setStatus(StatusTranca.LIVRE); // se existir @NotNull
 

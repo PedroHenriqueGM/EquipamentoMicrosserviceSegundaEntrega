@@ -309,6 +309,50 @@ class TrancaServiceTest {
                 .hasMessageContaining("Tranca não encontrada");
     }
 
+    @Test
+    void deveFalharAoBuscarTrancaInexistente() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.buscarPorId(1))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void deveDeletarTranca() {
+        tranca.setStatus(StatusTranca.LIVRE);
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+        when(trancaRepository.saveAndFlush(any(Tranca.class))).thenReturn(tranca);
+
+        trancaService.deletarTranca(1);
+
+        verify(trancaRepository).saveAndFlush(tranca);
+    }
+
+
+    @Test
+    void deveFalharAoDeletarTrancaInexistente() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.deletarTranca(1))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void deveFalharAoTrancarBicicletaJaAssociada() {
+        tranca.setStatus(StatusTranca.LIVRE);
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+        when(bicicletaRepository.findById(10)).thenReturn(Optional.of(bicicleta));
+        when(trancaRepository.existsByBicicletaId(10)).thenReturn(true);
+
+        assertThatThrownBy(() -> trancaService.trancar(1, 10))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+
+
+
 
 
 
