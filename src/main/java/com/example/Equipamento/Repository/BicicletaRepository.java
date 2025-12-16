@@ -8,8 +8,4 @@ import java.util.Optional;
 
 public interface BicicletaRepository extends JpaRepository<Bicicleta, Integer> {
 
-    Optional<Bicicleta> findByNumero(String numero);
-
-    @Transactional
-    void deleteByNumero(String numero);
 }

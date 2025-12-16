@@ -10,11 +10,6 @@ import java.util.Optional;
 
 public interface TrancaRepository extends JpaRepository<Tranca, Integer> {
 
-    Optional<Tranca> findByNumero(String numero);
-
-    @Transactional
-    void deleteByNumero(String numero);
-
     // === R4: existe alguma tranca ocupando esta bicicleta? ===
     boolean existsByBicicletaId(Integer bicicletaId);
 
