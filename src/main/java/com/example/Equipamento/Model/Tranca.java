@@ -21,8 +21,8 @@ public class Tranca {
     private int id;
 
     @Column(name = "numero", unique = true)
-    @NotNull(message = "O número da tranca é obrigatório.")
-    private Integer numero;
+    //@NotNull(message = "O número da tranca é obrigatório.")
+    private int numero;
 
     @Enumerated(EnumType.STRING)
     private StatusTranca status;
