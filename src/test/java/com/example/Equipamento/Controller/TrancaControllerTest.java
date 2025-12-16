@@ -2,7 +2,10 @@ package com.example.Equipamento.Controller;
 
 import com.example.Equipamento.Dto.IntegrarTrancaNaRedeDTO;
 import com.example.Equipamento.Dto.RetirarTrancaDTO;
+import com.example.Equipamento.Model.Bicicleta;
 import com.example.Equipamento.Model.Tranca;
+import com.example.Equipamento.Model.enums.StatusTranca;
+import com.example.Equipamento.Repository.TrancaRepository;
 import com.example.Equipamento.Service.TrancaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +33,9 @@ class TrancaControllerTest {
 
     @Mock
     private TrancaService trancaService;
+
+    @Mock
+    private TrancaRepository trancaRepository;
 
     @InjectMocks
     private TrancaController trancaController;
@@ -100,4 +106,87 @@ class TrancaControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void deveSalvarTranca() throws Exception {
+        Tranca tranca = new Tranca();
+        tranca.setId(1);
+        tranca.setNumero("T-001");      
+        tranca.setLocalizacao("Centro"); // se existir @NotBlank
+        tranca.setStatus(StatusTranca.LIVRE); // se existir @NotNull
+
+        when(trancaService.salvarTranca(any(Tranca.class))).thenReturn(tranca);
+
+        mockMvc.perform(post("/tranca")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tranca)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+
+    @Test
+    void deveListarTrancas() throws Exception {
+        Tranca t1 = new Tranca();
+        t1.setId(1);
+        Tranca t2 = new Tranca();
+        t2.setId(2);
+
+        when(trancaService.buscarPorId(any())).thenThrow(new RuntimeException()); // não usado
+        when(trancaController.listarTrancas().getBody())
+                .thenReturn(null); // evita NPE no standalone
+
+        mockMvc.perform(get("/tranca"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deveBuscarTrancaPorId() throws Exception {
+        Tranca tranca = new Tranca();
+        tranca.setId(1);
+
+        when(trancaService.buscarPorId(1)).thenReturn(tranca);
+
+        mockMvc.perform(get("/tranca/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void deveDeletarTranca() throws Exception {
+        doNothing().when(trancaService).deletarTranca(1);
+
+        mockMvc.perform(delete("/tranca/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deveAtualizarTranca() throws Exception {
+        Tranca tranca = new Tranca();
+        tranca.setId(1);
+
+        when(trancaService.atualizarTrancaPorId(eq(1), any(Tranca.class)))
+                .thenReturn(tranca);
+
+        mockMvc.perform(put("/tranca/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tranca)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void deveBuscarBicicletaDaTranca() throws Exception {
+        Bicicleta bicicleta = new Bicicleta();
+        bicicleta.setId(10);
+
+        when(trancaService.buscarBicicletaDaTranca(1)).thenReturn(bicicleta);
+
+        mockMvc.perform(get("/tranca/1/bicicleta"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10));
+    }
+
+
+
 }

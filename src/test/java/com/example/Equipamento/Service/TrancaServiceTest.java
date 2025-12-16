@@ -207,4 +207,110 @@ class TrancaServiceTest {
                 .hasMessageContaining("A tranca não pertence ao totem informado");
     }
 
+    @Test
+    void deveFalharAoTrancarTrancaInexistente() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.trancar(1, 10))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Tranca não encontrada");
+    }
+
+    @Test
+    void deveFalharAoTrancarQuandoStatusNaoForLivre() {
+        tranca.setStatus(StatusTranca.EM_REPARO);
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+
+        assertThatThrownBy(() -> trancaService.trancar(1, 10))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("só pode ser TRANCADA quando está LIVRE");
+    }
+
+
+
+    @Test
+    void deveFalharAoTrancarComBicicletaInexistente() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+        when(bicicletaRepository.findById(10)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.trancar(1, 10))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Bicicleta não encontrada");
+    }
+
+    @Test
+    void deveFalharAoDestrancarTrancaInexistente() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.destrancar(1, 10))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Tranca não encontrada");
+    }
+
+    @Test
+    void deveFalharAoDestrancarQuandoNaoEstaOcupada() {
+        tranca.setStatus(StatusTranca.LIVRE);
+
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+
+        assertThatThrownBy(() -> trancaService.destrancar(1, 10))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("só pode ser DESTRANCADA quando está OCUPADA");
+    }
+
+
+    @Test
+    void deveFalharAoIntegrarQuandoTrancaNaoExiste() {
+        IntegrarTrancaNaRedeDTO dto = new IntegrarTrancaNaRedeDTO();
+        dto.setIdTotem(1L);
+        dto.setIdTranca(1);
+        dto.setIdReparador("99");
+
+        when(totemRepository.findById(1L)).thenReturn(Optional.of(totem));
+        when(trancaRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.incluirTrancaNaRede(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Tranca não encontrada");
+    }
+
+
+    @Test
+    void deveFalharAoIntegrarQuandoTotemNaoExiste() {
+        IntegrarTrancaNaRedeDTO dto = new IntegrarTrancaNaRedeDTO();
+        dto.setIdTotem(1L);
+        dto.setIdTranca(1);
+        dto.setIdReparador("99");
+
+        when(totemRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.incluirTrancaNaRede(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Totem não encontrado");
+    }
+
+
+    @Test
+    void deveFalharAoAlterarStatusComAcaoInvalida() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.of(tranca));
+
+        assertThatThrownBy(() -> trancaService.alterarStatus(1, "INVALIDO"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Ação inválida");
+    }
+
+    @Test
+    void deveFalharAoAlterarStatusTrancaInexistente() {
+        when(trancaRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> trancaService.alterarStatus(1, "BLOQUEAR"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Tranca não encontrada");
+    }
+
+
+
+
+
 }
