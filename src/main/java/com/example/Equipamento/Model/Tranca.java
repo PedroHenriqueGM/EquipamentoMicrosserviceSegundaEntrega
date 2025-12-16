@@ -22,7 +22,7 @@ public class Tranca {
 
     @Column(name = "numero", unique = true)
     @NotNull(message = "O número da tranca é obrigatório.")
-    private int numero;
+    private Integer numero;
 
     @Enumerated(EnumType.STRING)
     private StatusTranca status;
