@@ -38,33 +38,31 @@ public class BancoService {
 
         // Totem
         Totem totem = new Totem();
-        totem.setId(1L);
         totem.setLocalizacao("Rio de Janeiro");
-        totemRepository.save(totem);
+        Totem savedTotem = totemRepository.save(totem); // ID gerado automaticamente
 
         // Bicicletas
-        bicicletaRepository.saveAll(List.of(
-                bicicleta(1, StatusBicicleta.DISPONIVEL),
-                bicicleta(2, StatusBicicleta.REPARO_SOLICITADO),
-                bicicleta(3, StatusBicicleta.EM_USO),
-                bicicleta(4, StatusBicicleta.EM_REPARO),
-                bicicleta(5, StatusBicicleta.EM_USO)
+        List<Bicicleta> bicicletas = bicicletaRepository.saveAll(List.of(
+                bicicleta(StatusBicicleta.DISPONIVEL),
+                bicicleta(StatusBicicleta.REPARO_SOLICITADO),
+                bicicleta(StatusBicicleta.EM_USO),
+                bicicleta(StatusBicicleta.EM_REPARO),
+                bicicleta(StatusBicicleta.EM_USO)
         ));
 
         // Trancas
         trancaRepository.saveAll(List.of(
-                tranca(1, StatusTranca.OCUPADA, 1, totem),
-                tranca(2, StatusTranca.DISPONIVEL, null, totem),
-                tranca(3, StatusTranca.OCUPADA, 2, totem),
-                tranca(4, StatusTranca.OCUPADA, 5, totem),
-                tranca(5, StatusTranca.EM_REPARO, null, null),
-                tranca(6, StatusTranca.REPARO_SOLICITADO, null, totem)
+                tranca(StatusTranca.OCUPADA, bicicletas.get(0), savedTotem),
+                tranca(StatusTranca.DISPONIVEL, null, savedTotem),
+                tranca(StatusTranca.OCUPADA, bicicletas.get(1), savedTotem),
+                tranca(StatusTranca.OCUPADA, bicicletas.get(4), savedTotem),
+                tranca(StatusTranca.EM_REPARO, null, null),
+                tranca(StatusTranca.REPARO_SOLICITADO, null, savedTotem)
         ));
     }
 
-    private Bicicleta bicicleta(int id, StatusBicicleta status) {
+    private Bicicleta bicicleta(StatusBicicleta status) {
         Bicicleta b = new Bicicleta();
-        b.setId(id);
         b.setMarca("Caloi");
         b.setModelo("Caloi");
         b.setAno("2020");
@@ -73,21 +71,16 @@ public class BancoService {
         return b;
     }
 
-    private Tranca tranca(int id, StatusTranca status, Integer bicicletaId, Totem totem) {
+    private Tranca tranca(StatusTranca status, Bicicleta bicicleta, Totem totem) {
         Tranca t = new Tranca();
-        t.setId(id);
         t.setLocalizacao("Rio de Janeiro");
         t.setNumero(12345);
         t.setAno("2020");
         t.setModelo("Caloi");
         t.setStatus(status);
-
-        if (bicicletaId != null) {
-            t.setBicicleta(bicicletaRepository.findById(bicicletaId).orElse(null));
-        }
-
+        t.setBicicleta(bicicleta);
         t.setTotem(totem);
-
         return t;
     }
+
 }
