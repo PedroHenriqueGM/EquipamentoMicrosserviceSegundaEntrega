@@ -56,7 +56,7 @@ public class BicicletaService {
         Bicicleta salva = repository.saveAndFlush(bicicleta);
 
         // R5: usa o próprio ID como número gerado pelo sistema
-        salva.setNumero("BIC-" + salva.getId());
+        salva.setNumero(salva.getId());
 
         // Atualiza o registro já com número
         repository.saveAndFlush(salva);
@@ -101,13 +101,13 @@ public class BicicletaService {
                     "R2: Marca, modelo e ano são obrigatórios.");
         }
 
-        if (req.getNumero() != null && !req.getNumero().equals(entity.getNumero())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "R3: o número não pode ser alterado.");
-        }
-
         if (req.getStatus() != null && req.getStatus() != entity.getStatus()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "R1: o status da bicicleta não pode ser alterado via PUT.");
+        }
+
+        if (req.getNumero() != entity.getNumero()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "R3: o número não pode ser alterado.");
         }
 
         entity.setMarca(req.getMarca());

@@ -4,6 +4,7 @@ import com.example.Equipamento.Model.enums.StatusTranca;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
@@ -20,8 +21,8 @@ public class Tranca {
     private int id;
 
     @Column(name = "numero", unique = true)
-    @NotBlank(message = "O número da tranca é obrigatório.")
-    private String numero;
+    @NotNull(message = "O número da tranca é obrigatório.")
+    private int numero;
 
     @Enumerated(EnumType.STRING)
     private StatusTranca status;

@@ -68,7 +68,7 @@ public class BancoService {
         b.setMarca("Caloi");
         b.setModelo("Caloi");
         b.setAno("2020");
-        b.setNumero("12345");
+        b.setNumero(12345);
         b.setStatus(status);
         return b;
     }
@@ -77,7 +77,7 @@ public class BancoService {
         Tranca t = new Tranca();
         t.setId(id);
         t.setLocalizacao("Rio de Janeiro");
-        t.setNumero("12345");
+        t.setNumero(12345);
         t.setAno("2020");
         t.setModelo("Caloi");
         t.setStatus(status);

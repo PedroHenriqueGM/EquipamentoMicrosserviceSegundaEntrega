@@ -49,7 +49,7 @@ class BicicletaServiceTest {
 
     private Bicicleta bicicleta;
 
-    private static final String NUMERO_BICICLETA = "BIC-1";
+    private static final int NUMERO_BICICLETA = 1;
     private static final String MARCA = "Caloi";
     private static final String MARCA2 = "Sense";
     private static final String MODELO = "Impact SL";
@@ -91,7 +91,7 @@ class BicicletaServiceTest {
         Bicicleta salva = bicicletaService.incluirBicicleta(nova);
 
         assertThat(salva.getId()).isEqualTo(10);
-        assertThat(salva.getNumero()).isEqualTo("BIC-10");
+        assertThat(salva.getNumero()).isEqualTo(10);
         assertThat(salva.getStatus()).isEqualTo(StatusBicicleta.NOVA);
 
         verify(bicicletaRepository, atLeast(2)).saveAndFlush(any(Bicicleta.class));
@@ -144,6 +144,7 @@ class BicicletaServiceTest {
         when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bicicleta));
 
         Bicicleta req = new Bicicleta();
+        req.setNumero(NUMERO_BICICLETA); // <--- adiciona isso
         req.setMarca(MARCA2);
         req.setModelo(MODELO);
         req.setAno("2024");
@@ -156,6 +157,7 @@ class BicicletaServiceTest {
         verify(bicicletaRepository, times(1)).saveAndFlush(bicicleta);
     }
 
+
     @Test
     void naoDevePermitirAlterarNumeroDaBicicleta() {
         when(bicicletaRepository.findById(1)).thenReturn(Optional.of(bicicleta));
@@ -164,7 +166,7 @@ class BicicletaServiceTest {
         req.setMarca(MARCA2);
         req.setModelo(MODELO);
         req.setAno("2024");
-        req.setNumero("OUTRO-NUMERO");
+        req.setNumero(2);
 
         assertThatThrownBy(() -> bicicletaService.atualizarBicicletaPorId(1, req))
                 .isInstanceOf(ResponseStatusException.class)
@@ -298,12 +300,12 @@ class BicicletaServiceTest {
 
         Bicicleta bike = new Bicicleta();
         bike.setId(1);
-        bike.setNumero("BIC-1");
+        bike.setNumero(1);
         bike.setStatus(StatusBicicleta.NOVA);
 
         Tranca tranca = new Tranca();
         tranca.setId(10);
-        tranca.setNumero("T-10");
+        tranca.setNumero(10);
         tranca.setStatus(StatusTranca.DISPONIVEL);
 
         FuncionarioDTO funcionario = new FuncionarioDTO();
@@ -333,12 +335,12 @@ class BicicletaServiceTest {
 
         Bicicleta bike = new Bicicleta();
         bike.setId(1);
-        bike.setNumero("BIC-1");
+        bike.setNumero(1);
         bike.setStatus(StatusBicicleta.NOVA);
 
         Tranca tranca = new Tranca();
         tranca.setId(10);
-        tranca.setNumero("T-10");
+        tranca.setNumero(10);
         tranca.setStatus(StatusTranca.DISPONIVEL);
 
         FuncionarioDTO funcionario = new FuncionarioDTO();

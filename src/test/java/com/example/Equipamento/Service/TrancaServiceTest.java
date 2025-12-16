@@ -52,12 +52,12 @@ class TrancaServiceTest {
     void setUp() {
         tranca = new Tranca();
         tranca.setId(1);
-        tranca.setNumero("TR-1");
+        tranca.setNumero(1);
         tranca.setStatus(StatusTranca.DISPONIVEL);
 
         bicicleta = new Bicicleta();
         bicicleta.setId(10);
-        bicicleta.setNumero("BIC-10");
+        bicicleta.setNumero(10);
         bicicleta.setStatus(StatusBicicleta.NOVA);
 
         totem = new Totem();
@@ -399,7 +399,7 @@ class TrancaServiceTest {
         Tranca tranca = new Tranca();
         tranca.setId(1);
         tranca.setStatus(StatusTranca.NOVA);
-        tranca.setNumero("TR-1");
+        tranca.setNumero(1);
 
         FuncionarioDTO funcionario = new FuncionarioDTO();
         funcionario.setEmail("reparador@email.com");

@@ -53,7 +53,7 @@ public class TrancaService {
         Tranca salva = repository.saveAndFlush(tranca);
 
         // R5: usa o próprio ID como número gerado pelo sistema
-        salva.setNumero("TR-" + salva.getId());
+        salva.setNumero(salva.getId());
 
         // Atualiza o registro já com número
         repository.saveAndFlush(salva);
@@ -96,7 +96,7 @@ public class TrancaService {
         }
 
         // R3 – número não pode ser alterado
-        if (req.getNumero() != null && !req.getNumero().equals(entity.getNumero())) {
+        if (req.getNumero() != entity.getNumero()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "R3: o número da tranca não pode ser alterado.");
         }

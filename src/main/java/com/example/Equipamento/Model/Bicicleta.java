@@ -18,7 +18,7 @@ public class Bicicleta {
     private int id;
 
     @Column(name = "numero", unique = true)
-    private String numero;
+    private int numero;
 
     @Enumerated(EnumType.STRING)
     private StatusBicicleta status;
