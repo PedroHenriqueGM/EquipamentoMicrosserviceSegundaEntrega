@@ -1,93 +1,215 @@
-# EquipamentosMicrosservices
+# Microsserviço de Gerenciamento de Equipamentos
 
+Microsserviço desenvolvido em **Java e Spring Boot** para um sistema de gerenciamento de bicicletários. O serviço é responsável pelo gerenciamento de bicicletas, trancas e totens, incluindo o controle de seus estados, associação entre equipamentos e comunicação com outros microsserviços.
 
+## Tecnologias utilizadas
 
-## Getting started
+- **Java 17**
+- **Spring Boot 3.5.7**
+- **Spring Data JPA**
+- **Spring Web**
+- **Spring WebFlux**
+- **H2 Database**
+- **Maven**
+- **Docker**
+- **JUnit e Mockito**
+- **JaCoCo**
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Funcionalidades
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### Bicicletas
+- Cadastro, consulta, listagem e atualização de bicicletas.
+- Controle de estados operacionais, como `NOVA`, `DISPONIVEL`, `EM_USO` e `EM_REPARO`.
+- Integração e retirada de bicicletas da rede de bicicletários.
+- Associação e desassociação de bicicletas às trancas.
+- Validação das condições para manutenção, reparo e aposentadoria.
 
-## Add your files
+### Trancas
+- Cadastro, consulta, listagem e atualização de trancas.
+- Controle de estados operacionais, como `NOVA`, `DISPONIVEL`, `OCUPADA` e `EM_REPARO`.
+- Operações de trancar e destrancar bicicletas.
+- Integração e retirada de trancas da rede de totens.
+- Associação de trancas aos totens.
+- Validação das condições para manutenção e aposentadoria.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### Totens
+- Cadastro, consulta, listagem, atualização e exclusão de totens.
+- Associação de trancas aos totens.
+- Consulta das trancas e bicicletas vinculadas a cada totem.
 
+### Integrações entre serviços
+- Consulta de dados de funcionários em outro microsserviço.
+- Envio de notificações por e-mail em operações de inclusão e retirada de equipamentos da rede.
+- Comunicação HTTP utilizando Spring WebClient.
+
+## Endpoints principais
+
+Os endpoints abaixo representam as rotas declaradas nos controllers da aplicação.
+
+### Bicicletas — `/bicicleta`
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| POST | `/bicicleta` | Cadastrar bicicleta |
+| GET | `/bicicleta` | Listar bicicletas |
+| GET | `/bicicleta/{idBicicleta}` | Consultar bicicleta |
+| PUT | `/bicicleta/{idBicicleta}` | Atualizar bicicleta |
+| DELETE | `/bicicleta/{idBicicleta}` | Excluir bicicleta |
+| POST | `/bicicleta/integrarNaRede` | Integrar bicicleta à rede |
+| POST | `/bicicleta/retirarDaRede` | Retirar bicicleta da rede |
+| POST | `/bicicleta/{idBicicleta}/status/{acao}` | Alterar status |
+
+### Trancas — `/tranca`
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| POST | `/tranca` | Cadastrar tranca |
+| GET | `/tranca` | Listar trancas |
+| GET | `/tranca/{idTranca}` | Consultar tranca |
+| PUT | `/tranca/{idTranca}` | Atualizar tranca |
+| DELETE | `/tranca/{idTranca}` | Excluir tranca |
+| GET | `/tranca/{idTranca}/bicicleta` | Consultar bicicleta associada |
+| POST | `/tranca/{idTranca}/trancar` | Trancar bicicleta |
+| POST | `/tranca/{idTranca}/destrancar` | Destrancar bicicleta |
+| POST | `/tranca/integrarNaRede` | Integrar tranca à rede |
+| POST | `/tranca/retirarDaRede` | Retirar tranca da rede |
+| POST | `/tranca/{idTranca}/status/{acao}` | Alterar status |
+
+### Totens — `/totem`
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| POST | `/totem` | Cadastrar totem |
+| GET | `/totem` | Listar totens |
+| PUT | `/totem/{idTotem}` | Atualizar totem |
+| DELETE | `/totem/{idTotem}` | Excluir totem |
+| GET | `/totem/{idTotem}/trancas` | Listar trancas do totem |
+| GET | `/totem/{idTotem}/bicicletas` | Listar bicicletas do totem |
+
+### Banco de dados
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/restaurarBanco` | Restaurar dados de demonstração |
+
+**Atenção:** o endpoint `/restaurarBanco` apaga os registros existentes e recria dados de demonstração. Não deve ser utilizado em um ambiente com dados que precisam ser preservados.
+
+## Arquitetura e integrações
+
+O projeto utiliza uma arquitetura organizada em camadas:
+
+- **Controller:** recebe as requisições HTTP e disponibiliza os endpoints REST.
+- **Service:** concentra as regras de negócio e operações dos equipamentos.
+- **Repository:** realiza as operações de persistência utilizando Spring Data JPA.
+- **Model:** representa as entidades e seus relacionamentos.
+- **DTO:** organiza os dados utilizados na comunicação entre operações e serviços.
+
+O microsserviço realiza integrações externas por meio do `WebClient`:
+
+| Serviço | Responsabilidade |
+|---|---|
+| Service B | Consulta de funcionários e seus dados cadastrais |
+| Service C | Envio de notificações por e-mail |
+
+URLs configuradas:
+
+- Service B: `https://sistemadecontroledebicicletario-scb.onrender.com`
+- Service C: `https://scb-msexterno.onrender.com`
+
+## Banco de dados
+
+A aplicação utiliza o **H2 Database** em memória, com persistência gerenciada pelo Spring Data JPA.
+
+O console H2 está disponível em:
+
+`http://localhost:8081/h2-console`
+
+Configurações padrão:
+
+| Propriedade | Valor |
+|---|---|
+| JDBC URL | `jdbc:h2:mem:bicicletas` |
+| User | `sa` |
+| Password | *(vazio)* |
+| Driver | `org.h2.Driver` |
+
+Por utilizar um banco em memória, os dados são reinicializados quando a aplicação é encerrada.
+
+## Como executar o projeto
+
+### Pré-requisitos
+
+- JDK 17 ou superior.
+- Git.
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/PedroHenriqueGM/EquipamentoMicrosserviceSegundaEntrega.git
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/PedroHGM/equipamentosmicrosservices.git
-git branch -M main
-git push -uf origin main
+
+### 2. Acessar a pasta
+
+```bash
+cd EquipamentoMicrosserviceSegundaEntrega
 ```
 
-## Integrate with your tools
+### 3. Executar a aplicação
 
-- [ ] [Set up project integrations](https://gitlab.com/PedroHGM/equipamentosmicrosservices/-/settings/integrations)
+No Windows:
 
-## Collaborate with your team
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+No Linux ou macOS:
 
-## Test and Deploy
+```bash
+./mvnw spring-boot:run
+```
 
-Use the built-in continuous integration in GitLab.
+A aplicação ficará disponível em:
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+`http://localhost:8081`
 
-***
+## Testes
 
-# Editing this README
+O projeto possui testes automatizados utilizando JUnit e Mockito, abrangendo controllers e serviços.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Para executar os testes:
 
-## Suggestions for a good README
+No Windows:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```powershell
+.\mvnw.cmd test
+```
 
-## Name
-Choose a self-explaining name for your project.
+No Linux ou macOS:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+./mvnw test
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+O projeto também possui configuração do JaCoCo para geração de relatórios de cobertura de testes.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Docker
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+O repositório possui um `Dockerfile` para construção e execução da aplicação em container.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Para construir a imagem:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+docker build -t equipamento-microsservice .
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Para executar:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+docker run -p 8081:8081 equipamento-microsservice
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+A aplicação ficará disponível em `http://localhost:8081`.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## Autor
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Desenvolvido por [Pedro Henrique Gonçalves Magalhães](https://github.com/PedroHenriqueGM).
